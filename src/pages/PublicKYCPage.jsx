@@ -13,6 +13,7 @@ export default function PublicKYCPage() {
   const [visitorName, setVisitorName] = useState(localStorage.getItem("kycVisitorName") || "");
   const [hasEntered, setHasEntered] = useState(localStorage.getItem(`kyc-${token}`) === "true");
   const [formData, setFormData] = useState({});
+  const [leadData, setLeadData] = useState({});
   const [references, setReferences] = useState([]);
   const [newReference, setNewReference] = useState({ name: "", contact: "", relationship: "", type: "relative", address: "" });
   const [saving, setSaving] = useState(false);
@@ -26,10 +27,11 @@ export default function PublicKYCPage() {
       setLoading(true);
       const data = await KYCAPI.getByToken(token);
       const kycData = data.kyc || data;
-      const leadData = data.lead || data;
+      const leadDataResponse = data.lead || data;
       setKYC(kycData);
-      setLead(leadData);
+      setLead(leadDataResponse);
       setFormData(kycData);
+      setLeadData(leadDataResponse);
       setReferences(kycData.references || []);
     } catch (err) {
       setError(err.response?.data?.error || "This KYC link is not accessible or has been revoked");
@@ -79,18 +81,34 @@ export default function PublicKYCPage() {
   }
 
   function updateField(field, value) {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    const leadFields = ["customerName", "phone", "email", "employmentType", "occupation", "city"];
+    if (leadFields.includes(field)) {
+      setLeadData((prev) => ({ ...prev, [field]: value }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
   }
 
   async function handleSave() {
     try {
       setSaving(true);
       setError("");
-      const result = await KYCAPI.updateByToken(token, formData);
+
+      // Prepare data with both Lead and KYC updates
+      const updateData = {
+        ...formData,
+        leadUpdates: leadData
+      };
+
+      const result = await KYCAPI.updateByToken(token, updateData);
       const kycData = result.kyc || result;
+      const leadDataResponse = result.lead || lead;
+
       setKYC(kycData);
       setFormData(kycData);
-      setSuccess("KYC information saved successfully!");
+      setLead(leadDataResponse);
+      setLeadData(leadDataResponse);
+      setSuccess("Information saved successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.response?.data?.error || "Failed to save information");
@@ -306,38 +324,28 @@ export default function PublicKYCPage() {
         </div>
       )}
 
-      {/* Lead Information (Read-only) */}
+      {/* Lead Information */}
       {lead && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20, padding: 12, backgroundColor: "var(--bg)", borderRadius: 4 }}>
           <div>
             <h3>Lead Information</h3>
-            <div className="field">
-              <label>Name</label>
-              <input type="text" value={lead.customerName || ""} disabled />
-            </div>
-            <div className="field">
-              <label>Phone</label>
-              <input type="text" value={lead.phone || ""} disabled />
-            </div>
-            <div className="field">
-              <label>Email</label>
-              <input type="email" value={lead.email || ""} disabled />
-            </div>
+            <FieldDisplay label="Name" value={lead.customerName} field="customerName" required />
+            <FieldDisplay label="Phone" value={lead.phone} field="phone" required />
+            <FieldDisplay label="Email" value={lead.email} field="email" type="email" />
           </div>
           <div>
             <h3>Employment & Location</h3>
-            <div className="field">
-              <label>Employment Type</label>
-              <input type="text" value={lead.employmentType || "Salaried"} disabled />
-            </div>
-            <div className="field">
-              <label>Occupation</label>
-              <input type="text" value={lead.occupation || ""} disabled />
-            </div>
-            <div className="field">
-              <label>City</label>
-              <input type="text" value={lead.city || ""} disabled />
-            </div>
+            <SelectDisplay
+              label="Employment Type"
+              value={lead.employmentType || "Salaried"}
+              field="employmentType"
+              options={[
+                { value: "Salaried", label: "Salaried" },
+                { value: "Self-employed", label: "Self-employed" },
+              ]}
+            />
+            <FieldDisplay label="Occupation" value={lead.occupation} field="occupation" />
+            <FieldDisplay label="City" value={lead.city} field="city" />
           </div>
         </div>
       )}
