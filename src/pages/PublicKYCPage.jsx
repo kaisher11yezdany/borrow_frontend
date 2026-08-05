@@ -121,8 +121,9 @@ export default function PublicKYCPage() {
     return !value || value === "" || value === "—";
   }
 
-  function FieldDisplay({ label, value, field, type = "text", required = false }) {
-    const isEmpty = isFieldEmpty(value);
+  function FieldDisplay({ label, value, field, type = "text", required = false, dataSource = "kyc" }) {
+    const currentValue = dataSource === "lead" ? (leadData[field] !== undefined ? leadData[field] : value) : (formData[field] !== undefined ? formData[field] : value);
+    const isEmpty = isFieldEmpty(currentValue);
     if (isEmpty) {
       return (
         <div className="field">
@@ -131,7 +132,7 @@ export default function PublicKYCPage() {
           </label>
           <input
             type={type}
-            value={formData[field] || ""}
+            value={currentValue || ""}
             onChange={(e) => updateField(field, e.target.value)}
             placeholder={`Enter ${label.toLowerCase()}`}
             style={{
@@ -203,8 +204,9 @@ export default function PublicKYCPage() {
     );
   }
 
-  function SelectDisplay({ label, value, field, options, required = false }) {
-    const isEmpty = isFieldEmpty(value);
+  function SelectDisplay({ label, value, field, options, required = false, dataSource = "kyc" }) {
+    const currentValue = dataSource === "lead" ? (leadData[field] !== undefined ? leadData[field] : value) : (formData[field] !== undefined ? formData[field] : value);
+    const isEmpty = isFieldEmpty(currentValue);
     if (isEmpty) {
       return (
         <div className="field">
@@ -212,7 +214,7 @@ export default function PublicKYCPage() {
             {label} {required && <span style={{ color: "var(--red)" }}>*</span>}
           </label>
           <select
-            value={formData[field] || ""}
+            value={currentValue || ""}
             onChange={(e) => updateField(field, e.target.value)}
             style={{
               backgroundColor: "#f0fdf4",
@@ -329,23 +331,24 @@ export default function PublicKYCPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20, padding: 12, backgroundColor: "var(--bg)", borderRadius: 4 }}>
           <div>
             <h3>Lead Information</h3>
-            <FieldDisplay label="Name" value={lead.customerName} field="customerName" required />
-            <FieldDisplay label="Phone" value={lead.phone} field="phone" required />
-            <FieldDisplay label="Email" value={lead.email} field="email" type="email" />
+            <FieldDisplay label="Name" value={lead.customerName} field="customerName" required dataSource="lead" />
+            <FieldDisplay label="Phone" value={lead.phone} field="phone" required dataSource="lead" />
+            <FieldDisplay label="Email" value={lead.email} field="email" type="email" dataSource="lead" />
           </div>
           <div>
             <h3>Employment & Location</h3>
             <SelectDisplay
               label="Employment Type"
-              value={lead.employmentType || "Salaried"}
+              value={leadData.employmentType !== undefined ? leadData.employmentType : (lead.employmentType || "Salaried")}
               field="employmentType"
               options={[
                 { value: "Salaried", label: "Salaried" },
                 { value: "Self-employed", label: "Self-employed" },
               ]}
+              dataSource="lead"
             />
-            <FieldDisplay label="Occupation" value={lead.occupation} field="occupation" />
-            <FieldDisplay label="City" value={lead.city} field="city" />
+            <FieldDisplay label="Occupation" value={lead.occupation} field="occupation" dataSource="lead" />
+            <FieldDisplay label="City" value={lead.city} field="city" dataSource="lead" />
           </div>
         </div>
       )}
