@@ -12,8 +12,7 @@ export default function PublicKYCPage() {
   const [success, setSuccess] = useState("");
   const [visitorName, setVisitorName] = useState(localStorage.getItem("kycVisitorName") || "");
   const [hasEntered, setHasEntered] = useState(localStorage.getItem(`kyc-${token}`) === "true");
-  const [formData, setFormData] = useState({});
-  const [leadData, setLeadData] = useState({});
+  const [form, setForm] = useState({});
   const [references, setReferences] = useState([]);
   const [newReference, setNewReference] = useState({ name: "", contact: "", relationship: "", type: "relative", address: "" });
   const [saving, setSaving] = useState(false);
@@ -30,8 +29,7 @@ export default function PublicKYCPage() {
       const leadDataResponse = data.lead || data;
       setKYC(kycData);
       setLead(leadDataResponse);
-      setFormData(kycData);
-      setLeadData(leadDataResponse);
+      setForm({ ...leadDataResponse, ...kycData });
       setReferences(kycData.references || []);
     } catch (err) {
       setError(err.response?.data?.error || "This KYC link is not accessible or has been revoked");
@@ -81,12 +79,7 @@ export default function PublicKYCPage() {
   }
 
   function updateField(field, value) {
-    const leadFields = ["customerName", "phone", "email", "employmentType", "occupation", "city"];
-    if (leadFields.includes(field)) {
-      setLeadData((prev) => ({ ...prev, [field]: value }));
-    } else {
-      setFormData((prev) => ({ ...prev, [field]: value }));
-    }
+    setForm((prev) => ({ ...prev, [field]: value }));
   }
 
   async function handleSave() {
@@ -94,10 +87,21 @@ export default function PublicKYCPage() {
       setSaving(true);
       setError("");
 
-      // Prepare data with both Lead and KYC updates
+      const leadFields = ["customerName", "phone", "email", "employmentType", "occupation", "city"];
+      const leadUpdates = {};
+      const kycUpdates = {};
+
+      Object.keys(form).forEach((key) => {
+        if (leadFields.includes(key)) {
+          leadUpdates[key] = form[key];
+        } else {
+          kycUpdates[key] = form[key];
+        }
+      });
+
       const updateData = {
-        ...formData,
-        leadUpdates: leadData
+        ...kycUpdates,
+        leadUpdates
       };
 
       const result = await KYCAPI.updateByToken(token, updateData);
@@ -105,9 +109,8 @@ export default function PublicKYCPage() {
       const leadDataResponse = result.lead || lead;
 
       setKYC(kycData);
-      setFormData(kycData);
       setLead(leadDataResponse);
-      setLeadData(leadDataResponse);
+      setForm({ ...leadDataResponse, ...kycData });
       setSuccess("Information saved successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
@@ -121,9 +124,10 @@ export default function PublicKYCPage() {
     return !value || value === "" || value === "—";
   }
 
-  function FieldDisplay({ label, value, field, type = "text", required = false, dataSource = "kyc" }) {
-    const currentValue = dataSource === "lead" ? (leadData[field] !== undefined ? leadData[field] : value) : (formData[field] !== undefined ? formData[field] : value);
+  function FieldDisplay({ label, value, field, type = "text", required = false }) {
+    const currentValue = form[field] !== undefined ? form[field] : value;
     const originalIsEmpty = isFieldEmpty(value);
+
     if (originalIsEmpty) {
       return (
         <div className="field">
@@ -143,6 +147,7 @@ export default function PublicKYCPage() {
         </div>
       );
     }
+
     return (
       <div className="field">
         <label style={{ color: "var(--text-muted)" }}>{label} (Filled)</label>
@@ -204,9 +209,10 @@ export default function PublicKYCPage() {
     );
   }
 
-  function SelectDisplay({ label, value, field, options, required = false, dataSource = "kyc" }) {
-    const currentValue = dataSource === "lead" ? (leadData[field] !== undefined ? leadData[field] : value) : (formData[field] !== undefined ? formData[field] : value);
+  function SelectDisplay({ label, value, field, options, required = false }) {
+    const currentValue = form[field] !== undefined ? form[field] : value;
     const originalIsEmpty = isFieldEmpty(value);
+
     if (originalIsEmpty) {
       return (
         <div className="field">
@@ -231,7 +237,8 @@ export default function PublicKYCPage() {
         </div>
       );
     }
-    const selectedLabel = options.find((o) => o.value === value)?.label || value;
+
+    const selectedLabel = options.find((o) => o.value === currentValue)?.label || currentValue;
     return (
       <div className="field">
         <label style={{ color: "var(--text-muted)" }}>{label} (Filled)</label>
@@ -331,24 +338,23 @@ export default function PublicKYCPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20, padding: 12, backgroundColor: "var(--bg)", borderRadius: 4 }}>
           <div>
             <h3>Lead Information</h3>
-            <FieldDisplay label="Name" value={lead.customerName} field="customerName" required dataSource="lead" />
-            <FieldDisplay label="Phone" value={lead.phone} field="phone" required dataSource="lead" />
-            <FieldDisplay label="Email" value={lead.email} field="email" type="email" dataSource="lead" />
+            <FieldDisplay label="Name" value={lead.customerName} field="customerName" required />
+            <FieldDisplay label="Phone" value={lead.phone} field="phone" required />
+            <FieldDisplay label="Email" value={lead.email} field="email" type="email" />
           </div>
           <div>
             <h3>Employment & Location</h3>
             <SelectDisplay
               label="Employment Type"
-              value={leadData.employmentType !== undefined ? leadData.employmentType : (lead.employmentType || "Salaried")}
+              value={lead.employmentType || "Salaried"}
               field="employmentType"
               options={[
                 { value: "Salaried", label: "Salaried" },
                 { value: "Self-employed", label: "Self-employed" },
               ]}
-              dataSource="lead"
             />
-            <FieldDisplay label="Occupation" value={lead.occupation} field="occupation" dataSource="lead" />
-            <FieldDisplay label="City" value={lead.city} field="city" dataSource="lead" />
+            <FieldDisplay label="Occupation" value={lead.occupation} field="occupation" />
+            <FieldDisplay label="City" value={lead.city} field="city" />
           </div>
         </div>
       )}
@@ -357,7 +363,7 @@ export default function PublicKYCPage() {
       <div style={{ marginBottom: 20 }}>
         <h3>Additional Contact Information</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <FieldDisplay label="Official Email" value={formData.officialEmail} field="officialEmail" type="email" />
+          <FieldDisplay label="Official Email" value={form.officialEmail} field="officialEmail" type="email" />
         </div>
       </div>
 
@@ -367,7 +373,7 @@ export default function PublicKYCPage() {
           <h3>Family Information</h3>
           <SelectDisplay
             label="Marital Status"
-            value={formData.maritalStatus}
+            value={form.maritalStatus}
             field="maritalStatus"
             options={[
               { value: "single", label: "Single" },
@@ -377,19 +383,19 @@ export default function PublicKYCPage() {
             ]}
             required
           />
-          {formData.maritalStatus === "married" && (
-            <FieldDisplay label="Spouse Name" value={formData.spouseName} field="spouseName" />
+          {form.maritalStatus === "married" && (
+            <FieldDisplay label="Spouse Name" value={form.spouseName} field="spouseName" />
           )}
-          <FieldDisplay label="Mother Name" value={formData.motherName} field="motherName" required />
-          <FieldDisplay label="Number of Dependents" value={formData.numberOfDependents} field="numberOfDependents" type="number" />
+          <FieldDisplay label="Mother Name" value={form.motherName} field="motherName" required />
+          <FieldDisplay label="Number of Dependents" value={form.numberOfDependents} field="numberOfDependents" type="number" />
         </div>
 
         <div>
           <h3>Work Experience</h3>
-          <FieldDisplay label="Work Experience in Current Company" value={formData.workExperienceCurrentCompany} field="workExperienceCurrentCompany" required />
-          <FieldDisplay label="Total Work Experience" value={formData.totalWorkExperience} field="totalWorkExperience" required />
-          <FieldDisplay label="Years at Current Address" value={formData.yearsAtCurrentAddress} field="yearsAtCurrentAddress" type="number" required />
-          <FieldDisplay label="Years in Current City" value={formData.yearsInCurrentCity} field="yearsInCurrentCity" type="number" required />
+          <FieldDisplay label="Work Experience in Current Company" value={form.workExperienceCurrentCompany} field="workExperienceCurrentCompany" required />
+          <FieldDisplay label="Total Work Experience" value={form.totalWorkExperience} field="totalWorkExperience" required />
+          <FieldDisplay label="Years at Current Address" value={form.yearsAtCurrentAddress} field="yearsAtCurrentAddress" type="number" required />
+          <FieldDisplay label="Years in Current City" value={form.yearsInCurrentCity} field="yearsInCurrentCity" type="number" required />
         </div>
       </div>
 
@@ -399,12 +405,12 @@ export default function PublicKYCPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div>
             <h4>Permanent Address</h4>
-            <FieldDisplay label="STD Code & Mobile Number" value={formData.permanentAddressSTDCode} field="permanentAddressSTDCode" required />
-            <TextAreaDisplay label="Permanent Address" value={formData.permanentAddress} field="permanentAddress" required />
-            <FieldDisplay label="Landmark" value={formData.permanentLandmark} field="permanentLandmark" required />
+            <FieldDisplay label="STD Code & Mobile Number" value={form.permanentAddressSTDCode} field="permanentAddressSTDCode" required />
+            <TextAreaDisplay label="Permanent Address" value={form.permanentAddress} field="permanentAddress" required />
+            <FieldDisplay label="Landmark" value={form.permanentLandmark} field="permanentLandmark" required />
             <SelectDisplay
               label="Current Address Type"
-              value={formData.currentAddressType}
+              value={form.currentAddressType}
               field="currentAddressType"
               options={[
                 { value: "owned", label: "Owned" },
@@ -420,16 +426,16 @@ export default function PublicKYCPage() {
               <label>
                 <input
                   type="checkbox"
-                  checked={formData.sameAsPermament || false}
+                  checked={form.sameAsPermament || false}
                   onChange={(e) => updateField("sameAsPermament", e.target.checked)}
                 />{" "}
                 Same as Permanent Address
               </label>
             </div>
-            {!formData.sameAsPermament && (
+            {!form.sameAsPermament && (
               <>
-                <TextAreaDisplay label="Current Address" value={formData.currentAddress} field="currentAddress" />
-                <FieldDisplay label="Landmark" value={formData.currentLandmark} field="currentLandmark" />
+                <TextAreaDisplay label="Current Address" value={form.currentAddress} field="currentAddress" />
+                <FieldDisplay label="Landmark" value={form.currentLandmark} field="currentLandmark" />
               </>
             )}
           </div>
@@ -438,8 +444,8 @@ export default function PublicKYCPage() {
         <div style={{ marginTop: 16 }}>
           <h4>Company Address</h4>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <TextAreaDisplay label="Company Address" value={formData.companyAddress} field="companyAddress" required />
-            <FieldDisplay label="Landmark" value={formData.companyLandmark} field="companyLandmark" />
+            <TextAreaDisplay label="Company Address" value={form.companyAddress} field="companyAddress" required />
+            <FieldDisplay label="Landmark" value={form.companyLandmark} field="companyLandmark" />
           </div>
         </div>
       </div>
