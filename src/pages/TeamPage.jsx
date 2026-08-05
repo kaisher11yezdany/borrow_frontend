@@ -20,6 +20,21 @@ function buildReportsToOptions(users, excludeId) {
   return users.filter((u) => !excludeSet.has(u._id)).sort((a, b) => ROLES.indexOf(a.role) - ROLES.indexOf(b.role) || a.name.localeCompare(b.name));
 }
 
+function canDragUser(draggedUser, targetUser, users) {
+  if (draggedUser._id === targetUser._id) return false;
+  const descendants = new Set();
+  function collectDescendants(userId) {
+    users.forEach((u) => {
+      if (u.reportsTo === userId && !descendants.has(u._id)) {
+        descendants.add(u._id);
+        collectDescendants(u._id);
+      }
+    });
+  }
+  collectDescendants(draggedUser._id);
+  return !descendants.has(targetUser._id);
+}
+
 function EditUserForm({ user, users, onSave, onCancel }) {
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone || "");
@@ -63,9 +78,40 @@ function EditUserForm({ user, users, onSave, onCancel }) {
   );
 }
 
-function TreeNode({ user, users, depth, canEdit, editingId, setEditingId, onSave, onDelete }) {
+function TreeNode({ user, users, depth, canEdit, editingId, setEditingId, onSave, onDelete, draggedUser, setDraggedUser, onDropUser }) {
   const children = users.filter((u) => u.reportsTo === user._id);
-  const indent = "   ".repeat(depth) + (depth > 0 ? "└─ " : "");
+  const indent = "   ".repeat(depth) + (depth > 0 ? "└─ " : "");
+  const isDragSource = draggedUser?._id === user._id;
+  const canDropHere = canEdit && draggedUser && draggedUser._id !== user._id && canDragUser(draggedUser, user, users);
+  const [isDropTarget, setIsDropTarget] = useState(false);
+
+  function handleDragStart(e) {
+    if (!canEdit || user.role === "Admin") {
+      e.preventDefault();
+      return;
+    }
+    setDraggedUser(user);
+    e.dataTransfer.effectAllowed = "move";
+  }
+
+  function handleDragOver(e) {
+    if (!canDropHere) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setIsDropTarget(true);
+  }
+
+  function handleDragLeave() {
+    setIsDropTarget(false);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    setIsDropTarget(false);
+    if (canDropHere) {
+      onDropUser(draggedUser, user);
+    }
+  }
 
   if (editingId === user._id) {
     return (
@@ -79,7 +125,20 @@ function TreeNode({ user, users, depth, canEdit, editingId, setEditingId, onSave
           onCancel={() => setEditingId(null)}
         />
         {children.map((c) => (
-          <TreeNode key={c._id} user={c} users={users} depth={depth + 1} canEdit={canEdit} editingId={editingId} setEditingId={setEditingId} onSave={onSave} onDelete={onDelete} />
+          <TreeNode
+            key={c._id}
+            user={c}
+            users={users}
+            depth={depth + 1}
+            canEdit={canEdit}
+            editingId={editingId}
+            setEditingId={setEditingId}
+            onSave={onSave}
+            onDelete={onDelete}
+            draggedUser={draggedUser}
+            setDraggedUser={setDraggedUser}
+            onDropUser={onDropUser}
+          />
         ))}
       </>
     );
@@ -88,7 +147,21 @@ function TreeNode({ user, users, depth, canEdit, editingId, setEditingId, onSave
   const showEdit = canEdit && user.role !== "Admin";
   return (
     <>
-      <div className="tree-node">
+      <div
+        className="tree-node"
+        draggable={canEdit && user.role !== "Admin"}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        style={{
+          opacity: isDragSource ? 0.5 : 1,
+          backgroundColor: isDropTarget ? "var(--blue-soft)" : isDragSource ? "var(--gray-soft)" : "transparent",
+          cursor: canEdit && user.role !== "Admin" ? "grab" : "default",
+          transition: "all 0.2s ease",
+          borderRadius: "4px"
+        }}
+      >
         <span>
           <span className="indent">{indent}</span>
           {user.name}
@@ -105,7 +178,20 @@ function TreeNode({ user, users, depth, canEdit, editingId, setEditingId, onSave
         </span>
       </div>
       {children.map((c) => (
-        <TreeNode key={c._id} user={c} users={users} depth={depth + 1} canEdit={canEdit} editingId={editingId} setEditingId={setEditingId} onSave={onSave} onDelete={onDelete} />
+        <TreeNode
+          key={c._id}
+          user={c}
+          users={users}
+          depth={depth + 1}
+          canEdit={canEdit}
+          editingId={editingId}
+          setEditingId={setEditingId}
+          onSave={onSave}
+          onDelete={onDelete}
+          draggedUser={draggedUser}
+          setDraggedUser={setDraggedUser}
+          onDropUser={onDropUser}
+        />
       ))}
     </>
   );
@@ -122,6 +208,7 @@ export default function TeamPage() {
   const [reportsTo, setReportsTo] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [draggedUser, setDraggedUser] = useState(null);
 
   const { data, isLoading } = useQuery({ queryKey: ["team"], queryFn: TeamAPI.get });
   const users = data?.users || [];
@@ -161,6 +248,17 @@ export default function TeamPage() {
     }
   }
 
+  async function handleDropUser(draggedUser, targetUser) {
+    try {
+      await TeamAPI.updateUser(draggedUser._id, { reportsTo: targetUser._id });
+      setDraggedUser(null);
+      invalidate();
+    } catch (err) {
+      alert(err.response?.data?.error || "Could not update reporting hierarchy");
+      setDraggedUser(null);
+    }
+  }
+
   if (isLoading) return <p className="subtle">Loading…</p>;
 
   const roots = cu.role === "Admin" ? users.filter((u) => !u.reportsTo) : users.filter((u) => u._id === cu.id);
@@ -171,11 +269,25 @@ export default function TeamPage() {
       <h1>Team & hierarchy</h1>
       <p className="subtle">You only see your own position and everyone under you.</p>
       <div className="help-note">Your reporting line: {chain.map((u) => `${u.name} (${u.role})`).join(" → ")}</div>
+      {canManageTeam(cu) && <div className="help-note" style={{ backgroundColor: "var(--blue-soft)" }}>💡 Drag and drop team members to change reporting hierarchy</div>}
       <div className="row">
         <div className="col card">
           <h2>{cu.role === "Admin" ? "Full org structure" : "Your team"}</h2>
           {roots.map((r) => (
-            <TreeNode key={r._id} user={r} users={users} depth={0} canEdit={canManageTeam(cu)} editingId={editingId} setEditingId={setEditingId} onSave={saveUser} onDelete={deleteUser} />
+            <TreeNode
+              key={r._id}
+              user={r}
+              users={users}
+              depth={0}
+              canEdit={canManageTeam(cu)}
+              editingId={editingId}
+              setEditingId={setEditingId}
+              onSave={saveUser}
+              onDelete={deleteUser}
+              draggedUser={draggedUser}
+              setDraggedUser={setDraggedUser}
+              onDropUser={handleDropUser}
+            />
           ))}
         </div>
         <div className="col card">

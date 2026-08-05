@@ -11,6 +11,7 @@ import RemindersPage from "./pages/RemindersPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import TeamPage from "./pages/TeamPage";
 import SettingsPage from "./pages/SettingsPage";
+import PublicKYCPage from "./pages/PublicKYCPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
@@ -28,6 +29,7 @@ function Routed() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/kyc/:token" element={<PublicKYCPage />} />
       <Route
         path="/"
         element={

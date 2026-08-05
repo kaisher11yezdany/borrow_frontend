@@ -116,3 +116,23 @@ export const UploadAPI = {
     return api.post("/uploads/image", form, { headers: { "Content-Type": "multipart/form-data" } }).then((r) => r.data.url);
   },
 };
+
+export const KYCAPI = {
+  get: (leadId) => api.get(`/kyc/${leadId}`).then((r) => r.data),
+  update: (leadId, body) => api.put(`/kyc/${leadId}`, body).then((r) => r.data),
+  addReference: (leadId, body) => api.post(`/kyc/${leadId}/references`, body).then((r) => r.data),
+  removeReference: (leadId, referenceId) => api.delete(`/kyc/${leadId}/references/${referenceId}`).then((r) => r.data),
+  share: (leadId) => api.post(`/kyc/${leadId}/share`).then((r) => r.data),
+  revokeAll: (leadId) => api.post(`/kyc/${leadId}/revoke-all`).then((r) => r.data),
+  getByToken: (token) => api.get(`/kyc/public/${token}`).then((r) => r.data),
+  updateByToken: (token, body) => api.put(`/kyc/public/${token}`, body).then((r) => r.data),
+};
+
+export const ForumAPI = {
+  get: (leadId) => api.get(`/forum/${leadId}`).then((r) => r.data),
+  share: (leadId, emails) => api.post(`/forum/${leadId}/share`, { emails }).then((r) => r.data),
+  unshare: (leadId, email) => api.post(`/forum/${leadId}/unshare`, { email }).then((r) => r.data),
+  revokeAll: (leadId) => api.post(`/forum/${leadId}/revoke-all`).then((r) => r.data),
+  addMessage: (leadId, body) => api.post(`/forum/${leadId}/messages`, body).then((r) => r.data),
+  getByToken: (token) => api.get(`/forum/public/${token}`).then((r) => r.data),
+};
