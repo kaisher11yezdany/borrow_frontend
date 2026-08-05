@@ -157,7 +157,7 @@ export default function PublicKYCPage() {
             alignItems: "center",
           }}
         >
-          {value}
+          {currentValue}
         </div>
       </div>
     );
