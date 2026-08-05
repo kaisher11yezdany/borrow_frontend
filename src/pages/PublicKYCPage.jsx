@@ -123,8 +123,8 @@ export default function PublicKYCPage() {
 
   function FieldDisplay({ label, value, field, type = "text", required = false, dataSource = "kyc" }) {
     const currentValue = dataSource === "lead" ? (leadData[field] !== undefined ? leadData[field] : value) : (formData[field] !== undefined ? formData[field] : value);
-    const isEmpty = isFieldEmpty(currentValue);
-    if (isEmpty) {
+    const originalIsEmpty = isFieldEmpty(value);
+    if (originalIsEmpty) {
       return (
         <div className="field">
           <label>
@@ -206,8 +206,8 @@ export default function PublicKYCPage() {
 
   function SelectDisplay({ label, value, field, options, required = false, dataSource = "kyc" }) {
     const currentValue = dataSource === "lead" ? (leadData[field] !== undefined ? leadData[field] : value) : (formData[field] !== undefined ? formData[field] : value);
-    const isEmpty = isFieldEmpty(currentValue);
-    if (isEmpty) {
+    const originalIsEmpty = isFieldEmpty(value);
+    if (originalIsEmpty) {
       return (
         <div className="field">
           <label>
