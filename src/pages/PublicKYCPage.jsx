@@ -169,15 +169,17 @@ export default function PublicKYCPage() {
   }
 
   function TextAreaDisplay({ label, value, field, required = false }) {
-    const isEmpty = isFieldEmpty(value);
-    if (isEmpty) {
+    const currentValue = form[field] !== undefined ? form[field] : value;
+    const originalIsEmpty = isFieldEmpty(value);
+
+    if (originalIsEmpty) {
       return (
         <div className="field">
           <label>
             {label} {required && <span style={{ color: "var(--red)" }}>*</span>}
           </label>
           <textarea
-            value={formData[field] || ""}
+            value={currentValue || ""}
             onChange={(e) => updateField(field, e.target.value)}
             placeholder={`Enter ${label.toLowerCase()}`}
             rows="3"
@@ -189,6 +191,7 @@ export default function PublicKYCPage() {
         </div>
       );
     }
+
     return (
       <div className="field">
         <label style={{ color: "var(--text-muted)" }}>{label} (Filled)</label>
@@ -203,7 +206,7 @@ export default function PublicKYCPage() {
             wordWrap: "break-word",
           }}
         >
-          {value}
+          {currentValue}
         </div>
       </div>
     );
