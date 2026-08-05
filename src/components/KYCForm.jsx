@@ -82,36 +82,92 @@ export default function KYCForm({ lead, onSave }) {
       {error && <div style={{ color: "var(--red)", marginBottom: 12, padding: "10px", backgroundColor: "var(--red-soft)", borderRadius: "4px" }}>{error}</div>}
       {success && <div style={{ color: "var(--green)", marginBottom: 12, padding: "10px", backgroundColor: "var(--green-soft)", borderRadius: "4px" }}>{success}</div>}
 
-      {/* Lead Information (From Lead model) */}
+      {/* Lead Information (From Lead model) - Editable if empty */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20, padding: 12, backgroundColor: "var(--bg)", borderRadius: 4 }}>
         <div>
           <h3>Lead Information</h3>
           <div className="field">
-            <label>Name</label>
-            <input type="text" value={lead.customerName} disabled />
+            <label>Name {!lead.customerName && <span style={{ color: "var(--red)" }}>*</span>}</label>
+            <input
+              type="text"
+              value={kyc.leadName || lead.customerName || ""}
+              onChange={(e) => updateField("leadName", e.target.value)}
+              disabled={!!lead.customerName}
+              style={{
+                backgroundColor: lead.customerName ? "var(--bg)" : "#f0fdf4",
+                borderColor: lead.customerName ? "var(--border)" : "var(--green)",
+              }}
+            />
           </div>
           <div className="field">
-            <label>Phone</label>
-            <input type="text" value={lead.phone} disabled />
+            <label>Phone {!lead.phone && <span style={{ color: "var(--red)" }}>*</span>}</label>
+            <input
+              type="text"
+              value={kyc.leadPhone || lead.phone || ""}
+              onChange={(e) => updateField("leadPhone", e.target.value)}
+              disabled={!!lead.phone}
+              style={{
+                backgroundColor: lead.phone ? "var(--bg)" : "#f0fdf4",
+                borderColor: lead.phone ? "var(--border)" : "var(--green)",
+              }}
+            />
           </div>
           <div className="field">
             <label>Email</label>
-            <input type="email" value={lead.email || ""} disabled />
+            <input
+              type="email"
+              value={kyc.leadEmail || lead.email || ""}
+              onChange={(e) => updateField("leadEmail", e.target.value)}
+              disabled={!!lead.email}
+              style={{
+                backgroundColor: lead.email ? "var(--bg)" : "#f0fdf4",
+                borderColor: lead.email ? "var(--border)" : "var(--green)",
+              }}
+            />
           </div>
         </div>
         <div>
           <h3>Employment & Location</h3>
           <div className="field">
             <label>Employment Type</label>
-            <input type="text" value={lead.employmentType || "Salaried"} disabled />
+            <select
+              value={kyc.leadEmploymentType || lead.employmentType || "Salaried"}
+              onChange={(e) => updateField("leadEmploymentType", e.target.value)}
+              disabled={!!lead.employmentType}
+              style={{
+                backgroundColor: lead.employmentType ? "var(--bg)" : "#f0fdf4",
+                borderColor: lead.employmentType ? "var(--border)" : "var(--green)",
+              }}
+            >
+              <option value="Salaried">Salaried</option>
+              <option value="Self-employed">Self-employed</option>
+            </select>
           </div>
           <div className="field">
             <label>Occupation</label>
-            <input type="text" value={lead.occupation || ""} disabled />
+            <input
+              type="text"
+              value={kyc.leadOccupation || lead.occupation || ""}
+              onChange={(e) => updateField("leadOccupation", e.target.value)}
+              disabled={!!lead.occupation}
+              style={{
+                backgroundColor: lead.occupation ? "var(--bg)" : "#f0fdf4",
+                borderColor: lead.occupation ? "var(--border)" : "var(--green)",
+              }}
+            />
           </div>
           <div className="field">
             <label>City</label>
-            <input type="text" value={lead.city || ""} disabled />
+            <input
+              type="text"
+              value={kyc.leadCity || lead.city || ""}
+              onChange={(e) => updateField("leadCity", e.target.value)}
+              disabled={!!lead.city}
+              style={{
+                backgroundColor: lead.city ? "var(--bg)" : "#f0fdf4",
+                borderColor: lead.city ? "var(--border)" : "var(--green)",
+              }}
+            />
           </div>
         </div>
       </div>
