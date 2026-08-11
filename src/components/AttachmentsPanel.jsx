@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AttachmentsAPI } from "../api/endpoints";
+import { fileUrl } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { fmtDateTime } from "../constants";
 
@@ -70,12 +71,12 @@ function AttachmentRow({ attachment, canModify, onSave, onDelete }) {
   return (
     <div className="card" style={{ marginBottom: 10, padding: 12, display: "flex", gap: 12, alignItems: "flex-start" }}>
       {isImage(attachment.mimeType) ? (
-        <a href={attachment.url} target="_blank" rel="noreferrer">
-          <img src={attachment.url} alt={attachment.originalName} style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 6, border: "1px solid var(--border)" }} />
+        <a href={fileUrl(attachment.url)} target="_blank" rel="noreferrer">
+          <img src={fileUrl(attachment.url)} alt={attachment.originalName} style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 6, border: "1px solid var(--border)" }} />
         </a>
       ) : (
         <a
-          href={attachment.url}
+          href={fileUrl(attachment.url)}
           target="_blank"
           rel="noreferrer"
           style={{
@@ -101,7 +102,7 @@ function AttachmentRow({ attachment, canModify, onSave, onDelete }) {
         <div className="subtle" style={{ fontSize: 11 }}>
           {formatBytes(attachment.size)} · {attachment.uploadedBy?.name || "Unknown"} · {fmtDateTime(attachment.createdAt)}
         </div>
-        <a href={attachment.url} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
+        <a href={fileUrl(attachment.url)} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
           {isImage(attachment.mimeType) ? "View full size" : "Download"}
         </a>
       </div>

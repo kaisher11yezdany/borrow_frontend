@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Modal from "../Modal";
 import { KYCAPI, AttachmentsAPI } from "../../api/endpoints";
+import { fileUrl } from "../../api/client";
 import { fmtDateTime } from "../../constants";
 
 function formatBytes(bytes) {
@@ -215,12 +216,12 @@ export default function LeadDetailsModal({ lead, onClose }) {
               {attachments.map((attachment) => (
                 <div key={attachment._id} style={{ padding: 12, border: "1px solid var(--border)", borderRadius: 4, backgroundColor: "var(--bg)", display: "flex", gap: 12, alignItems: "flex-start" }}>
                   {isImage(attachment.mimeType) ? (
-                    <a href={attachment.url} target="_blank" rel="noreferrer">
-                      <img src={attachment.url} alt={attachment.originalName} style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 4, border: "1px solid var(--border)" }} />
+                    <a href={fileUrl(attachment.url)} target="_blank" rel="noreferrer">
+                      <img src={fileUrl(attachment.url)} alt={attachment.originalName} style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 4, border: "1px solid var(--border)" }} />
                     </a>
                   ) : (
                     <a
-                      href={attachment.url}
+                      href={fileUrl(attachment.url)}
                       target="_blank"
                       rel="noreferrer"
                       style={{
@@ -240,7 +241,7 @@ export default function LeadDetailsModal({ lead, onClose }) {
                     <div className="subtle" style={{ fontSize: 11 }}>
                       {formatBytes(attachment.size)} · {attachment.uploadedBy?.name || "Unknown"} · {fmtDateTime(attachment.createdAt)}
                     </div>
-                    <a href={attachment.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, display: "block", marginTop: 4 }}>
+                    <a href={fileUrl(attachment.url)} target="_blank" rel="noreferrer" style={{ fontSize: 12, display: "block", marginTop: 4 }}>
                       {isImage(attachment.mimeType) ? "View full size" : "Download"}
                     </a>
                   </div>

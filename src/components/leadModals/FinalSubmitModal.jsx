@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Modal from "../Modal";
 import LeadFormFields from "../LeadFormFields";
 import { LeadsAPI, SettingsAPI } from "../../api/endpoints";
+import { fileUrl } from "../../api/client";
 import { inr, fmtDate } from "../../constants";
 
 export default function FinalSubmitModal({ lead, onClose }) {
@@ -44,7 +45,7 @@ export default function FinalSubmitModal({ lead, onClose }) {
             Sanctioned: {inr(lead.sanctionAmount)} · Disbursed: {inr(lead.disbursement.amount)} on {fmtDate(lead.disbursement.date)}
             <br />
             {lead.disbursement.proofPhotoUrl ? (
-              <a href={lead.disbursement.proofPhotoUrl} target="_blank" rel="noreferrer">View disbursement proof</a>
+              <a href={fileUrl(lead.disbursement.proofPhotoUrl)} target="_blank" rel="noreferrer">View disbursement proof</a>
             ) : (
               "No disbursement proof attached"
             )}
