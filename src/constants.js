@@ -1,23 +1,50 @@
-export const ROLES = ["Admin", "Manager", "Team Lead", "Sales Manager", "Referral Partner"];
+// Order here is display/org-chart order only — NOT a seniority/permission
+// inheritance order. Sales Manager sits above Team Lead but has fewer
+// permissions than Team Lead below it, so nothing may derive access from
+// array position — every capability below is its own explicit allow-list,
+// mirroring server/src/utils/permissions.js exactly. This is UI convenience
+// only (hiding buttons a role can't use); the server re-checks everything.
+export const ROLES = ["Admin", "Backend", "Branch Manager", "Sales Manager", "Team Lead", "RM", "Referral Partner"];
 export const STAGES = ["Lead Added", "Lead Contacted", "Login Done", "Sanction Done", "Disbursement Done"];
 
-export function rank(role) {
-  return ROLES.indexOf(role);
-}
+const CAN_VERIFY = new Set(["Admin", "Backend", "Branch Manager", "Team Lead"]);
+const CAN_UPDATE_STAGE = new Set(["Admin", "Backend", "Branch Manager", "Sales Manager", "Team Lead", "RM"]);
+const CAN_MANAGE_ACCOUNTING = new Set(["Admin", "Backend", "Branch Manager"]);
+const CAN_SEE_MARGIN = new Set(["Admin", "Backend", "Branch Manager", "Team Lead"]);
+const CAN_MANAGE_SETTINGS = new Set(["Admin", "Backend", "Branch Manager"]);
+const CAN_MANAGE_TEAM_MEMBERS = new Set(["Admin", "Backend", "Branch Manager"]);
+const CAN_VIEW_TEAM_HIERARCHY = new Set(["Admin", "Backend", "Branch Manager", "Team Lead", "RM"]);
+// Deliberately Admin-only — Backend and Branch Manager are explicitly denied
+// hierarchy remapping and data export even though they otherwise have broad access.
+const CAN_MANAGE_HIERARCHY = new Set(["Admin"]);
+const CAN_EXPORT_DATA = new Set(["Admin"]);
+
 export function canVerify(user) {
-  return rank(user.role) <= rank("Team Lead");
+  return CAN_VERIFY.has(user.role);
 }
 export function canUpdateStage(user) {
-  return rank(user.role) <= rank("Sales Manager");
+  return CAN_UPDATE_STAGE.has(user.role);
 }
 export function canManageAccounting(user) {
-  return rank(user.role) <= rank("Manager");
-}
-export function canManageTeam(user) {
-  return user.role === "Admin";
+  return CAN_MANAGE_ACCOUNTING.has(user.role);
 }
 export function canSeeMargin(user) {
-  return rank(user.role) <= rank("Team Lead");
+  return CAN_SEE_MARGIN.has(user.role);
+}
+export function canManageSettings(user) {
+  return CAN_MANAGE_SETTINGS.has(user.role);
+}
+export function canManageTeamMembers(user) {
+  return CAN_MANAGE_TEAM_MEMBERS.has(user.role);
+}
+export function canViewTeamHierarchy(user) {
+  return CAN_VIEW_TEAM_HIERARCHY.has(user.role);
+}
+export function canManageHierarchy(user) {
+  return CAN_MANAGE_HIERARCHY.has(user.role);
+}
+export function canExportData(user) {
+  return CAN_EXPORT_DATA.has(user.role);
 }
 export function isClosed(lead) {
   return lead.closure && lead.closure.status !== "open";

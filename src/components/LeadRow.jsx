@@ -70,7 +70,7 @@ function FollowUpCell({ nextReminder, canManage, onManage }) {
   );
 }
 
-export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder, actions, isSelected, onSelectToggle }) {
+export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder, actions, isSelected, onSelectToggle, onViewDetails }) {
   const idx = STAGES.indexOf(lead.stage);
   const next = STAGES[idx + 1];
   const isLast = !next;
@@ -97,7 +97,13 @@ export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder,
           <input type="checkbox" checked={isSelected} onChange={onSelectToggle} style={{ cursor: "pointer" }} />
         </td>
         <td>
-          {lead.customerName}
+          <button
+            className="btn-link"
+            onClick={() => onViewDetails(lead)}
+            style={{ textAlign: "left", padding: 0, border: "none", background: "none", cursor: "pointer", color: "var(--blue)", textDecoration: "underline", fontSize: "inherit", fontWeight: "inherit" }}
+          >
+            {lead.customerName}
+          </button>
           <div className="subtle" style={{ margin: 0, fontSize: 11 }}>
             {lead.phone}
             {lead.city ? ` · ${lead.city}` : ""} · {fmtDate(lead.createdAt)}
@@ -111,6 +117,15 @@ export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder,
           <span className="badge" style={{ backgroundColor: lead.productColor || "#3B82F6", color: "white" }}>
             {lead.product}
           </span>
+        </td>
+        <td>
+          {lead.loanType ? (
+            <span className={`badge ${lead.loanType === "Secure" ? "green" : "amber"}`}>
+              {lead.loanType}
+            </span>
+          ) : (
+            <span className="subtle">—</span>
+          )}
         </td>
         <td className="num">{inr(lead.loanAmount)}</td>
         <td style={{ whiteSpace: "nowrap" }}>{partnerCell}</td>
@@ -160,7 +175,13 @@ export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder,
         <input type="checkbox" checked={isSelected} onChange={onSelectToggle} style={{ cursor: "pointer" }} />
       </td>
       <td>
-        {lead.customerName}
+        <button
+          className="btn-link"
+          onClick={() => onViewDetails(lead)}
+          style={{ textAlign: "left", padding: 0, border: "none", background: "none", cursor: "pointer", color: "var(--blue)", textDecoration: "underline", fontSize: "inherit", fontWeight: "inherit" }}
+        >
+          {lead.customerName}
+        </button>
         <div className="subtle" style={{ margin: 0, fontSize: 11 }}>
           {lead.phone}
           {lead.city ? ` · ${lead.city}` : ""} · {fmtDate(lead.createdAt)}
@@ -174,6 +195,15 @@ export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder,
         <span className="badge" style={{ backgroundColor: lead.productColor || "#3B82F6", color: "white" }}>
           {lead.product}
         </span>
+      </td>
+      <td>
+        {lead.loanType ? (
+          <span className={`badge ${lead.loanType === "Secure" ? "green" : "amber"}`}>
+            {lead.loanType}
+          </span>
+        ) : (
+          <span className="subtle">—</span>
+        )}
       </td>
       <td className="num">{inr(lead.loanAmount)}</td>
       <td>{partnerCell}</td>

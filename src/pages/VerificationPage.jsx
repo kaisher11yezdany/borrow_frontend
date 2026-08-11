@@ -10,6 +10,7 @@ import RejectModal from "../components/RejectModal";
 import NotesModal from "../components/NotesModal";
 import VerificationHistoryModal from "../components/VerificationHistoryModal";
 import { ImageModal } from "../components/ViewModal";
+import LeadDetailsModal from "../components/accountingModals/LeadDetailsModal";
 
 const QUEUE_STATUS_OPTIONS = [
   { value: "pending", label: "Pending review" },
@@ -158,7 +159,13 @@ export default function VerificationPage() {
                     return (
                       <tr key={lead._id}>
                         <td>
-                          {lead.customerName}
+                          <button
+                            className="btn-link"
+                            onClick={() => setModal({ type: "details", lead })}
+                            style={{ textAlign: "left", padding: 0, border: "none", background: "none", cursor: "pointer", color: "var(--blue)", textDecoration: "underline", fontSize: "inherit", fontWeight: "inherit" }}
+                          >
+                            {lead.customerName}
+                          </button>
                           <div className="subtle" style={{ margin: 0, fontSize: 11 }}>
                             {lead.phone}
                             {" "}·{" "}
@@ -240,7 +247,13 @@ export default function VerificationPage() {
                     return (
                       <tr key={lead._id}>
                         <td>
-                          {lead.customerName}
+                          <button
+                            className="btn-link"
+                            onClick={() => setModal({ type: "details", lead })}
+                            style={{ textAlign: "left", padding: 0, border: "none", background: "none", cursor: "pointer", color: "var(--blue)", textDecoration: "underline", fontSize: "inherit", fontWeight: "inherit" }}
+                          >
+                            {lead.customerName}
+                          </button>
                           <div style={{ marginTop: 3 }}>
                             <a href="#" style={{ fontSize: 11 }} onClick={(e) => { e.preventDefault(); setModal({ type: "history", lead }); }}>History</a>
                           </div>
@@ -309,6 +322,7 @@ export default function VerificationPage() {
       {modal?.type === "notes" && <NotesModal lead={modal.lead} onClose={() => setModal(null)} />}
       {modal?.type === "history" && <VerificationHistoryModal lead={modal.lead} allUsers={allUsers} onClose={() => setModal(null)} />}
       {modal?.type === "image" && <ImageModal title={modal.title} src={modal.src} onClose={() => setModal(null)} />}
+      {modal?.type === "details" && <LeadDetailsModal lead={modal.lead} onClose={() => setModal(null)} />}
     </>
   );
 }

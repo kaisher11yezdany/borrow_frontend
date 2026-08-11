@@ -72,7 +72,7 @@ export default function DashboardPage() {
 
       {user.role === "Referral Partner" && managerRow && (
         <div className="help-note">
-          Your Sales Manager: <b>{managerRow.name}</b> · {managerRow.phone}
+          Your {managerRow.role}: <b>{managerRow.name}</b> · {managerRow.phone}
           {managerRow.email ? ` · ${managerRow.email}` : ""}
         </div>
       )}

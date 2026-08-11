@@ -57,6 +57,16 @@ export const RemindersAPI = {
   remove: (id) => api.delete(`/reminders/${id}`).then((r) => r.data),
 };
 
+export const TaskAPI = {
+  listAll: (params) => api.get(`/tasks/all`, { params }).then((r) => r.data),
+  listForLead: (leadId) => api.get(`/tasks/lead/${leadId}`).then((r) => r.data.tasks),
+  create: (leadId, body) => api.post(`/tasks/lead/${leadId}`, body).then((r) => r.data.task),
+  update: (taskId, body) => api.put(`/tasks/${taskId}`, body).then((r) => r.data.task),
+  delete: (taskId) => api.delete(`/tasks/${taskId}`).then((r) => r.data),
+  addComment: (taskId, text) => api.post(`/tasks/${taskId}/comments`, { text }).then((r) => r.data.task),
+  deleteComment: (taskId, commentId) => api.delete(`/tasks/${taskId}/comments/${commentId}`).then((r) => r.data.task),
+};
+
 export const NotificationsAPI = {
   list: (params) => api.get("/notifications", { params }).then((r) => r.data),
 };

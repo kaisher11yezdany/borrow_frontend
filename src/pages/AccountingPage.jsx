@@ -6,6 +6,7 @@ import { canSeeMargin, inr } from "../constants";
 import { installmentsTotal, entryBalance, entryStatusLabel, totalExpensesOf } from "../utils/acct";
 import PaymentsModal from "../components/accountingModals/PaymentsModal";
 import ExpensesModal from "../components/accountingModals/ExpensesModal";
+import LeadDetailsModal from "../components/accountingModals/LeadDetailsModal";
 
 function AcctCell({ lead, field, entry, editable, doneLabel, onManage }) {
   const total = installmentsTotal(entry);
@@ -81,7 +82,15 @@ export default function AccountingPage() {
               ) : (
                 rows.map((r) => (
                   <tr key={r.lead._id}>
-                    <td>{r.lead.customerName}</td>
+                    <td>
+                      <button
+                        className="btn-link"
+                        onClick={() => setModal({ type: "details", lead: r.lead })}
+                        style={{ textAlign: "left", padding: 0, border: "none", background: "none", cursor: "pointer", color: "var(--blue)", textDecoration: "underline" }}
+                      >
+                        {r.lead.customerName}
+                      </button>
+                    </td>
                     <td>
                       <span
                         className="badge"
@@ -127,6 +136,9 @@ export default function AccountingPage() {
         )}
         {modal?.type === "payments" && (
           <PaymentsModal lead={modal.lead} field={modal.field} editable={modal.editable} onClose={() => setModal(null)} />
+        )}
+        {modal?.type === "details" && (
+          <LeadDetailsModal lead={modal.lead} onClose={() => setModal(null)} />
         )}
       </>
     );
@@ -199,7 +211,13 @@ export default function AccountingPage() {
               rows.map((r) => (
                 <tr key={r.lead._id}>
                   <td>
-                    {r.lead.customerName}
+                    <button
+                      className="btn-link"
+                      onClick={() => setModal({ type: "details", lead: r.lead })}
+                      style={{ textAlign: "left", padding: 0, border: "none", background: "none", cursor: "pointer", color: "var(--blue)", textDecoration: "underline", fontSize: "inherit", fontWeight: "inherit" }}
+                    >
+                      {r.lead.customerName}
+                    </button>
                     <div className="subtle" style={{ margin: 0, fontSize: 11 }}>
                       Sourced by {partnerName(r.lead.partnerId)}
                       {r.lead.dsaCode ? ` · DSA ${r.lead.dsaCode}` : ""}
@@ -279,6 +297,9 @@ export default function AccountingPage() {
       )}
       {modal?.type === "expenses" && (
         <ExpensesModal lead={modal.lead} editable={modal.editable} onClose={() => setModal(null)} />
+      )}
+      {modal?.type === "details" && (
+        <LeadDetailsModal lead={modal.lead} onClose={() => setModal(null)} />
       )}
     </>
   );

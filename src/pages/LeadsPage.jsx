@@ -19,6 +19,7 @@ import CommentsModal from "../components/CommentsModal";
 import AttachmentsModal from "../components/AttachmentsModal";
 import VerificationHistoryModal from "../components/VerificationHistoryModal";
 import { ImageModal } from "../components/ViewModal";
+import LeadDetailsModal from "../components/accountingModals/LeadDetailsModal";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Pending review" },
@@ -26,7 +27,7 @@ const STATUS_OPTIONS = [
   { value: "verified", label: "Approved" },
   { value: "rejected", label: "Rejected" },
 ];
-const EMPTY_FILTERS = { search: "", product: "All", partnerId: "", stage: "", status: "", from: "", to: "" };
+const EMPTY_FILTERS = { search: "", product: "All", partnerId: "", stage: "", status: "", loanType: "", from: "", to: "" };
 const PAGE_SIZES = [10, 20, 50, 100];
 
 export default function LeadsPage() {
@@ -53,6 +54,7 @@ export default function LeadsPage() {
         partnerId: filters.partnerId || undefined,
         stage: filters.stage || undefined,
         status: filters.status || undefined,
+        loanType: filters.loanType || undefined,
         from: filters.from || undefined,
         to: filters.to || undefined,
         page,
@@ -116,6 +118,7 @@ export default function LeadsPage() {
     onManageAttachments: (lead) => setModal({ type: "attachments", lead }),
     onViewHistory: (lead) => setModal({ type: "history", lead }),
     onViewImage: (src, title) => setModal({ type: "image", src, title }),
+    onViewDetails: (lead) => setModal({ type: "details", lead }),
     onReassign: async (lead, partnerId) => {
       await LeadsAPI.reassign(lead._id, partnerId);
       invalidateAll();
@@ -246,6 +249,14 @@ export default function LeadsPage() {
             </select>
           </div>
           <div className="field" style={{ marginBottom: 0 }}>
+            <label>Loan Type</label>
+            <select value={filters.loanType} onChange={(e) => updateFilter({ loanType: e.target.value })}>
+              <option value="">Any type</option>
+              <option value="Secure">Secure</option>
+              <option value="Unsecure">Unsecure</option>
+            </select>
+          </div>
+          <div className="field" style={{ marginBottom: 0 }}>
             <label>Added from</label>
             <input type="date" value={filters.from} onChange={(e) => updateFilter({ from: e.target.value })} />
           </div>
@@ -277,6 +288,7 @@ export default function LeadsPage() {
               </th>
               <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)" }}>Customer</th>
               <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)" }}>Product</th>
+              <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)" }}>Loan Type</th>
               <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)" }}>Amount</th>
               <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)" }}>Sourced by</th>
               <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)" }}>Status</th>
@@ -290,9 +302,9 @@ export default function LeadsPage() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr className="empty-row"><td colSpan={12}>Loading…</td></tr>
+              <tr className="empty-row"><td colSpan={13}>Loading…</td></tr>
             ) : leads.length === 0 ? (
-              <tr className="empty-row"><td colSpan={12}>No leads match. Try clearing filters or add a lead.</td></tr>
+              <tr className="empty-row"><td colSpan={13}>No leads match. Try clearing filters or add a lead.</td></tr>
             ) : (
               leads.map((lead) => (
                 <LeadRow
@@ -305,6 +317,7 @@ export default function LeadsPage() {
                   actions={actions}
                   isSelected={selectedLeads.has(lead._id)}
                   onSelectToggle={() => toggleSelectLead(lead._id)}
+                  onViewDetails={actions.onViewDetails}
                 />
               ))
             )}
@@ -342,6 +355,7 @@ export default function LeadsPage() {
       {modal?.type === "attachments" && <AttachmentsModal lead={modal.lead} onClose={() => setModal(null)} />}
       {modal?.type === "history" && <VerificationHistoryModal lead={modal.lead} allUsers={allUsers} onClose={() => setModal(null)} />}
       {modal?.type === "image" && <ImageModal title={modal.title} src={modal.src} onClose={() => setModal(null)} />}
+      {modal?.type === "details" && <LeadDetailsModal lead={modal.lead} onClose={() => setModal(null)} />}
     </>
   );
 }

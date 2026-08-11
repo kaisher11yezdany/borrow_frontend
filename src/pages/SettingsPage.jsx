@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { SettingsAPI } from "../api/endpoints";
-import { canManageTeam } from "../constants";
+import { canManageSettings } from "../constants";
 
 function LookupCard({ title, help, items, onAdd, onToggle, placeholder }) {
   const [name, setName] = useState("");
@@ -178,13 +178,13 @@ function BanksCard({ products, banksByProduct, onAdd, onToggle }) {
 export default function SettingsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["settings"], queryFn: SettingsAPI.get, enabled: canManageTeam(user) });
+  const { data, isLoading } = useQuery({ queryKey: ["settings"], queryFn: SettingsAPI.get, enabled: canManageSettings(user) });
 
   function invalidate() {
     qc.invalidateQueries({ queryKey: ["settings"] });
   }
 
-  if (!canManageTeam(user)) return <><h1>Settings</h1><p className="subtle">Admin only.</p></>;
+  if (!canManageSettings(user)) return <><h1>Settings</h1><p className="subtle">Not available at your role.</p></>;
   if (isLoading) return <p className="subtle">Loading…</p>;
 
   const { products = [], banksByProduct = {}, expenseTypes = [], companyBankAccounts = [], digitalChannels = [] } = data || {};

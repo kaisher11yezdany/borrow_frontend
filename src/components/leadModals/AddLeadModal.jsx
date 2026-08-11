@@ -13,7 +13,6 @@ export default function AddLeadModal({ onClose }) {
 
   const activeProducts = (settings?.products || []).filter((p) => p.active);
   const [product, setProduct] = useState("");
-  const [productColor, setProductColor] = useState("#3B82F6");
   const [partnerId, setPartnerId] = useState(user.id);
   const [fields, setFields] = useState({ leadSource: "Referral", employmentType: "Salaried" });
   const [attachFiles, setAttachFiles] = useState([]);
@@ -21,9 +20,7 @@ export default function AddLeadModal({ onClose }) {
   const [submitting, setSubmitting] = useState(false);
 
   function handleProductChange(e) {
-    const selectedProduct = activeProducts.find((p) => p.name === e.target.value);
     setProduct(e.target.value);
-    setProductColor(selectedProduct?.color || "#3B82F6");
   }
 
   function addFiles(e) {
@@ -41,7 +38,7 @@ export default function AddLeadModal({ onClose }) {
     setSubmitting(true);
     try {
       const selectedProduct = product || activeProducts[0]?.name;
-      const selectedColor = activeProducts.find((p) => p.name === selectedProduct)?.color || productColor;
+      const selectedColor = activeProducts.find((p) => p.name === selectedProduct)?.color || "#3B82F6";
       const lead = await LeadsAPI.create({
         ...fields,
         product: selectedProduct,
@@ -71,24 +68,14 @@ export default function AddLeadModal({ onClose }) {
       <form onSubmit={onSubmit}>
         <div className="field">
           <label>Product</label>
-          <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
-            <select value={product} onChange={handleProductChange} required style={{ flex: 1 }}>
-              {activeProducts.length === 0 ? (
-                <option value="">No active products — add one in Settings</option>
-              ) : (
-                activeProducts.map((p) => <option key={p._id}>{p.name}</option>)
-              )}
-            </select>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <label style={{ margin: 0 }}>Color</label>
-              <input
-                type="color"
-                value={productColor}
-                onChange={(e) => setProductColor(e.target.value)}
-                style={{ width: 50, height: 40, cursor: "pointer", border: "1px solid var(--gray)" }}
-              />
-            </div>
-          </div>
+          <select value={product} onChange={handleProductChange} required>
+            {activeProducts.length === 0 ? (
+              <option value="">No active products — add one in Settings</option>
+            ) : (
+              activeProducts.map((p) => <option key={p._id}>{p.name}</option>)
+            )}
+          </select>
+          <p className="subtle" style={{ fontSize: 11, marginTop: 4 }}>Color is automatically set from product settings</p>
         </div>
         <LeadFormFields fields={fields} setFields={setFields} digitalChannels={settings?.digitalChannels} showProofField={false} />
         <div className="field">

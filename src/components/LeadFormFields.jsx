@@ -52,6 +52,14 @@ export default function LeadFormFields({ fields, setFields, digitalChannels, sho
         <input type="number" min="1" value={fields.loanAmount || ""} onChange={(e) => set({ loanAmount: e.target.value })} />
       </div>
       <div className="field">
+        <label>Loan type</label>
+        <select value={fields.loanType || ""} onChange={(e) => set({ loanType: e.target.value })}>
+          <option value="">-- Select loan type --</option>
+          <option value="Secure">Secure</option>
+          <option value="Unsecure">Unsecure</option>
+        </select>
+      </div>
+      <div className="field">
         <label>Monthly income (₹)</label>
         <input type="number" min="0" value={fields.monthlyIncome || ""} onChange={(e) => set({ monthlyIncome: e.target.value })} />
       </div>

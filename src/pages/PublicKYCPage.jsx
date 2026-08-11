@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { KYCAPI } from "../api/endpoints";
 
@@ -12,10 +12,13 @@ export default function PublicKYCPage() {
   const [success, setSuccess] = useState("");
   const [visitorName, setVisitorName] = useState(localStorage.getItem("kycVisitorName") || "");
   const [hasEntered, setHasEntered] = useState(localStorage.getItem(`kyc-${token}`) === "true");
-  const [form, setForm] = useState({});
+  const [formData, setFormData] = useState({});
+  const [originalValues, setOriginalValues] = useState({});
   const [references, setReferences] = useState([]);
   const [newReference, setNewReference] = useState({ name: "", contact: "", relationship: "", type: "relative", address: "" });
   const [saving, setSaving] = useState(false);
+  const [sameAsPermament, setSameAsPermament] = useState(formData.sameAsPermament || false);
+  const formRefs = useRef({});
 
   useEffect(() => {
     loadKYC();
@@ -29,7 +32,10 @@ export default function PublicKYCPage() {
       const leadDataResponse = data.lead || data;
       setKYC(kycData);
       setLead(leadDataResponse);
-      setForm({ ...leadDataResponse, ...kycData });
+      const mergedForm = { ...leadDataResponse, ...kycData };
+      setFormData(mergedForm);
+      setSameAsPermament(mergedForm.sameAsPermament || false);
+      setOriginalValues(kycData);
       setReferences(kycData.references || []);
     } catch (err) {
       setError(err.response?.data?.error || "This KYC link is not accessible or has been revoked");
@@ -78,8 +84,19 @@ export default function PublicKYCPage() {
     setError("");
   }
 
-  function updateField(field, value) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  function handleSameAsPermament(checked) {
+    setSameAsPermament(checked);
+    if (checked) {
+      const permanentAddr = formRefs.current.permanentAddress?.value || "";
+      const permanentLandmark = formRefs.current.permanentLandmark?.value || "";
+
+      if (formRefs.current.currentAddress) {
+        formRefs.current.currentAddress.value = permanentAddr;
+      }
+      if (formRefs.current.currentLandmark) {
+        formRefs.current.currentLandmark.value = permanentLandmark;
+      }
+    }
   }
 
   async function handleSave() {
@@ -91,13 +108,26 @@ export default function PublicKYCPage() {
       const leadUpdates = {};
       const kycUpdates = {};
 
-      Object.keys(form).forEach((key) => {
+      Object.keys(formRefs.current).forEach((key) => {
+        const ref = formRefs.current[key];
+        if (!ref) return;
+
+        const value = ref.type === "checkbox" ? ref.checked : ref.value;
         if (leadFields.includes(key)) {
-          leadUpdates[key] = form[key];
+          leadUpdates[key] = value;
         } else {
-          kycUpdates[key] = form[key];
+          kycUpdates[key] = value;
         }
       });
+
+      // If "Same as Permanent Address" is checked, copy permanent values to current
+      if (sameAsPermament) {
+        kycUpdates.currentAddress = formRefs.current.permanentAddress?.value || "";
+        kycUpdates.currentLandmark = formRefs.current.permanentLandmark?.value || "";
+      }
+
+      // Always include sameAsPermament flag
+      kycUpdates.sameAsPermament = sameAsPermament;
 
       const updateData = {
         ...kycUpdates,
@@ -110,7 +140,10 @@ export default function PublicKYCPage() {
 
       setKYC(kycData);
       setLead(leadDataResponse);
-      setForm({ ...leadDataResponse, ...kycData });
+      const mergedForm = { ...leadDataResponse, ...kycData };
+      setFormData(mergedForm);
+      setSameAsPermament(mergedForm.sameAsPermament || false);
+      setOriginalValues(kycData);
       setSuccess("Information saved successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
@@ -120,144 +153,54 @@ export default function PublicKYCPage() {
     }
   }
 
-  function isFieldEmpty(value) {
-    return !value || value === "" || value === "—";
-  }
-
-  function FieldDisplay({ label, value, field, type = "text", required = false }) {
-    const currentValue = form[field] !== undefined ? form[field] : value;
-    const originalIsEmpty = isFieldEmpty(value);
-
-    if (originalIsEmpty) {
-      return (
-        <div className="field">
-          <label>
-            {label} {required && <span style={{ color: "var(--red)" }}>*</span>}
-          </label>
-          <input
-            type={type}
-            value={currentValue || ""}
-            onChange={(e) => updateField(field, e.target.value)}
-            placeholder={`Enter ${label.toLowerCase()}`}
-            style={{
-              backgroundColor: "#f0fdf4",
-              borderColor: "var(--green)",
-            }}
-          />
-        </div>
-      );
-    }
-
+  function FormField({ label, field, type = "text", required = false }) {
+    const defaultValue = formData[field] || "";
+    const isDisabled = defaultValue !== "";
     return (
       <div className="field">
-        <label style={{ color: "var(--text-muted)" }}>{label} (Filled)</label>
-        <div
-          style={{
-            padding: "8px",
-            borderRadius: 4,
-            border: "1px solid var(--border)",
-            backgroundColor: "var(--bg)",
-            minHeight: 36,
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {currentValue}
-        </div>
+        <label>{label} {required && <span style={{ color: "var(--red)" }}>*</span>}</label>
+        <input
+          type={type}
+          defaultValue={defaultValue}
+          ref={(el) => { if (el) formRefs.current[field] = el; }}
+          placeholder={`Enter ${label.toLowerCase()}`}
+          disabled={isDisabled}
+        />
       </div>
     );
   }
 
-  function TextAreaDisplay({ label, value, field, required = false }) {
-    const currentValue = form[field] !== undefined ? form[field] : value;
-    const originalIsEmpty = isFieldEmpty(value);
-
-    if (originalIsEmpty) {
-      return (
-        <div className="field">
-          <label>
-            {label} {required && <span style={{ color: "var(--red)" }}>*</span>}
-          </label>
-          <textarea
-            value={currentValue || ""}
-            onChange={(e) => updateField(field, e.target.value)}
-            placeholder={`Enter ${label.toLowerCase()}`}
-            rows="3"
-            style={{
-              backgroundColor: "#f0fdf4",
-              borderColor: "var(--green)",
-            }}
-          />
-        </div>
-      );
-    }
-
+  function FormTextArea({ label, field, required = false }) {
+    const defaultValue = formData[field] || "";
+    const isDisabled = defaultValue !== "";
     return (
       <div className="field">
-        <label style={{ color: "var(--text-muted)" }}>{label} (Filled)</label>
-        <div
-          style={{
-            padding: "8px",
-            borderRadius: 4,
-            border: "1px solid var(--border)",
-            backgroundColor: "var(--bg)",
-            minHeight: 60,
-            whiteSpace: "pre-wrap",
-            wordWrap: "break-word",
-          }}
-        >
-          {currentValue}
-        </div>
+        <label>{label} {required && <span style={{ color: "var(--red)" }}>*</span>}</label>
+        <textarea
+          defaultValue={defaultValue}
+          ref={(el) => { if (el) formRefs.current[field] = el; }}
+          placeholder={`Enter ${label.toLowerCase()}`}
+          rows="3"
+          disabled={isDisabled}
+        />
       </div>
     );
   }
 
-  function SelectDisplay({ label, value, field, options, required = false }) {
-    const currentValue = form[field] !== undefined ? form[field] : value;
-    const originalIsEmpty = isFieldEmpty(value);
-
-    if (originalIsEmpty) {
-      return (
-        <div className="field">
-          <label>
-            {label} {required && <span style={{ color: "var(--red)" }}>*</span>}
-          </label>
-          <select
-            value={currentValue || ""}
-            onChange={(e) => updateField(field, e.target.value)}
-            style={{
-              backgroundColor: "#f0fdf4",
-              borderColor: "var(--green)",
-            }}
-          >
-            <option value="">Select...</option>
-            {options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      );
-    }
-
-    const selectedLabel = options.find((o) => o.value === currentValue)?.label || currentValue;
+  function FormSelect({ label, field, options, required = false }) {
+    const defaultValue = formData[field] || "";
+    const isDisabled = defaultValue !== "";
     return (
       <div className="field">
-        <label style={{ color: "var(--text-muted)" }}>{label} (Filled)</label>
-        <div
-          style={{
-            padding: "8px",
-            borderRadius: 4,
-            border: "1px solid var(--border)",
-            backgroundColor: "var(--bg)",
-            minHeight: 36,
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {selectedLabel}
-        </div>
+        <label>{label} {required && <span style={{ color: "var(--red)" }}>*</span>}</label>
+        <select defaultValue={defaultValue} ref={(el) => { if (el) formRefs.current[field] = el; }} disabled={isDisabled}>
+          <option value="">Select...</option>
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
       </div>
     );
   }
@@ -341,23 +284,22 @@ export default function PublicKYCPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20, padding: 12, backgroundColor: "var(--bg)", borderRadius: 4 }}>
           <div>
             <h3>Lead Information</h3>
-            <FieldDisplay label="Name" value={lead.customerName} field="customerName" required />
-            <FieldDisplay label="Phone" value={lead.phone} field="phone" required />
-            <FieldDisplay label="Email" value={lead.email} field="email" type="email" />
+            <FormField label="Name" field="customerName" required />
+            <FormField label="Phone" field="phone" required />
+            <FormField label="Email" field="email" type="email" />
           </div>
           <div>
             <h3>Employment & Location</h3>
-            <SelectDisplay
+            <FormSelect
               label="Employment Type"
-              value={lead.employmentType || "Salaried"}
               field="employmentType"
               options={[
                 { value: "Salaried", label: "Salaried" },
                 { value: "Self-employed", label: "Self-employed" },
               ]}
             />
-            <FieldDisplay label="Occupation" value={lead.occupation} field="occupation" />
-            <FieldDisplay label="City" value={lead.city} field="city" />
+            <FormField label="Occupation" field="occupation" />
+            <FormField label="City" field="city" />
           </div>
         </div>
       )}
@@ -366,7 +308,7 @@ export default function PublicKYCPage() {
       <div style={{ marginBottom: 20 }}>
         <h3>Additional Contact Information</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <FieldDisplay label="Official Email" value={form.officialEmail} field="officialEmail" type="email" />
+          <FormField label="Official Email" field="officialEmail" type="email" />
         </div>
       </div>
 
@@ -374,9 +316,8 @@ export default function PublicKYCPage() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
         <div>
           <h3>Family Information</h3>
-          <SelectDisplay
+          <FormSelect
             label="Marital Status"
-            value={form.maritalStatus}
             field="maritalStatus"
             options={[
               { value: "single", label: "Single" },
@@ -386,19 +327,19 @@ export default function PublicKYCPage() {
             ]}
             required
           />
-          {form.maritalStatus === "married" && (
-            <FieldDisplay label="Spouse Name" value={form.spouseName} field="spouseName" />
+          {formData.maritalStatus === "married" && (
+            <FormField label="Spouse Name" field="spouseName" />
           )}
-          <FieldDisplay label="Mother Name" value={form.motherName} field="motherName" required />
-          <FieldDisplay label="Number of Dependents" value={form.numberOfDependents} field="numberOfDependents" type="number" />
+          <FormField label="Mother Name" field="motherName" required />
+          <FormField label="Number of Dependents" field="numberOfDependents" type="number" />
         </div>
 
         <div>
           <h3>Work Experience</h3>
-          <FieldDisplay label="Work Experience in Current Company" value={form.workExperienceCurrentCompany} field="workExperienceCurrentCompany" required />
-          <FieldDisplay label="Total Work Experience" value={form.totalWorkExperience} field="totalWorkExperience" required />
-          <FieldDisplay label="Years at Current Address" value={form.yearsAtCurrentAddress} field="yearsAtCurrentAddress" type="number" required />
-          <FieldDisplay label="Years in Current City" value={form.yearsInCurrentCity} field="yearsInCurrentCity" type="number" required />
+          <FormField label="Work Experience in Current Company" field="workExperienceCurrentCompany" required />
+          <FormField label="Total Work Experience" field="totalWorkExperience" required />
+          <FormField label="Years at Current Address" field="yearsAtCurrentAddress" type="number" required />
+          <FormField label="Years in Current City" field="yearsInCurrentCity" type="number" required />
         </div>
       </div>
 
@@ -408,12 +349,11 @@ export default function PublicKYCPage() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
           <div>
             <h4>Permanent Address</h4>
-            <FieldDisplay label="STD Code & Mobile Number" value={form.permanentAddressSTDCode} field="permanentAddressSTDCode" required />
-            <TextAreaDisplay label="Permanent Address" value={form.permanentAddress} field="permanentAddress" required />
-            <FieldDisplay label="Landmark" value={form.permanentLandmark} field="permanentLandmark" required />
-            <SelectDisplay
+            <FormField label="STD Code & Mobile Number" field="permanentAddressSTDCode" required />
+            <FormTextArea label="Permanent Address" field="permanentAddress" required />
+            <FormField label="Landmark" field="permanentLandmark" required />
+            <FormSelect
               label="Current Address Type"
-              value={form.currentAddressType}
               field="currentAddressType"
               options={[
                 { value: "owned", label: "Owned" },
@@ -429,16 +369,16 @@ export default function PublicKYCPage() {
               <label>
                 <input
                   type="checkbox"
-                  checked={form.sameAsPermament || false}
-                  onChange={(e) => updateField("sameAsPermament", e.target.checked)}
+                  checked={sameAsPermament}
+                  onChange={(e) => handleSameAsPermament(e.target.checked)}
                 />{" "}
                 Same as Permanent Address
               </label>
             </div>
-            {!form.sameAsPermament && (
+            {!sameAsPermament && (
               <>
-                <TextAreaDisplay label="Current Address" value={form.currentAddress} field="currentAddress" />
-                <FieldDisplay label="Landmark" value={form.currentLandmark} field="currentLandmark" />
+                <FormTextArea label="Current Address" field="currentAddress" />
+                <FormField label="Landmark" field="currentLandmark" />
               </>
             )}
           </div>
@@ -447,8 +387,8 @@ export default function PublicKYCPage() {
         <div style={{ marginTop: 16 }}>
           <h4>Company Address</h4>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <TextAreaDisplay label="Company Address" value={form.companyAddress} field="companyAddress" required />
-            <FieldDisplay label="Landmark" value={form.companyLandmark} field="companyLandmark" />
+            <FormTextArea label="Company Address" field="companyAddress" required />
+            <FormField label="Landmark" field="companyLandmark" />
           </div>
         </div>
       </div>

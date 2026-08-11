@@ -4,6 +4,7 @@ import Modal from "../Modal";
 import LeadFormFields from "../LeadFormFields";
 import AttachmentsPanel from "../AttachmentsPanel";
 import KYCForm from "../KYCForm";
+import TaskPanel from "../TaskPanel";
 import { LeadsAPI, SettingsAPI, KYCAPI } from "../../api/endpoints";
 import { useAuth } from "../../auth/AuthContext";
 
@@ -123,7 +124,6 @@ export default function EditLeadModal({ lead, onClose }) {
   const { user } = useAuth();
   const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: SettingsAPI.get });
   const [fields, setFields] = useState({ ...lead });
-  const [productColor, setProductColor] = useState(lead.productColor || "#3B82F6");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
@@ -132,8 +132,7 @@ export default function EditLeadModal({ lead, onClose }) {
 
   function handleProductChange(productName) {
     const selectedProduct = activeProducts.find((p) => p.name === productName);
-    setFields((f) => ({ ...f, product: productName }));
-    setProductColor(selectedProduct?.color || "#3B82F6");
+    setFields((f) => ({ ...f, product: productName, productColor: selectedProduct?.color || "#3B82F6" }));
   }
 
   let helpText = "Editing details for this lead.";
@@ -146,7 +145,7 @@ export default function EditLeadModal({ lead, onClose }) {
     setError("");
     setSubmitting(true);
     try {
-      await LeadsAPI.update(lead._id, { ...fields, productColor });
+      await LeadsAPI.update(lead._id, fields);
       qc.invalidateQueries({ queryKey: ["leads"] });
       qc.invalidateQueries({ queryKey: ["verification-badge"] });
       onClose();
@@ -196,6 +195,21 @@ export default function EditLeadModal({ lead, onClose }) {
         >
           📋 KYC Information
         </button>
+        <button
+          onClick={() => setActiveTab("tasks")}
+          style={{
+            padding: "12px 16px",
+            border: "none",
+            backgroundColor: "transparent",
+            borderBottom: activeTab === "tasks" ? "2px solid var(--blue)" : "transparent",
+            color: activeTab === "tasks" ? "var(--blue)" : "var(--text)",
+            cursor: "pointer",
+            fontWeight: activeTab === "tasks" ? "600" : "normal",
+            transition: "all 0.2s",
+          }}
+        >
+          ✓ Tasks
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -203,24 +217,14 @@ export default function EditLeadModal({ lead, onClose }) {
         <form onSubmit={onSubmit}>
           <div className="field">
             <label>Product</label>
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
-              <select value={fields.product || ""} onChange={(e) => handleProductChange(e.target.value)} style={{ flex: 1 }}>
-                {activeProducts.map((p) => (
-                  <option key={p._id} value={p.name}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <label style={{ margin: 0 }}>Color</label>
-                <input
-                  type="color"
-                  value={productColor}
-                  onChange={(e) => setProductColor(e.target.value)}
-                  style={{ width: 50, height: 40, cursor: "pointer", border: "1px solid var(--gray)" }}
-                />
-              </div>
-            </div>
+            <select value={fields.product || ""} onChange={(e) => handleProductChange(e.target.value)}>
+              {activeProducts.map((p) => (
+                <option key={p._id} value={p.name}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            <p className="subtle" style={{ fontSize: 11, marginTop: 4 }}>Color is automatically set from product settings</p>
           </div>
           <LeadFormFields fields={fields} setFields={setFields} digitalChannels={settings?.digitalChannels} showProofField={false} />
           <AttachmentsPanel lead={lead} />
@@ -240,6 +244,12 @@ export default function EditLeadModal({ lead, onClose }) {
         <div style={{ maxHeight: "600px", overflowY: "auto", paddingRight: 8 }}>
           <KYCForm lead={lead} onSave={() => qc.invalidateQueries({ queryKey: ["leads"] })} />
           <KYCSharingSection lead={lead} />
+        </div>
+      )}
+
+      {activeTab === "tasks" && (
+        <div style={{ maxHeight: "600px", overflowY: "auto", paddingRight: 8 }}>
+          <TaskPanel lead={lead} />
         </div>
       )}
     </Modal>

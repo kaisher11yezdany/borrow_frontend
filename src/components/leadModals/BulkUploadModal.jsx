@@ -10,6 +10,7 @@ const LEAD_FIELDS = [
   { name: "altPhone", label: "Alternate Phone" },
   { name: "email", label: "Email" },
   { name: "loanAmount", label: "Loan Amount", type: "number" },
+  { name: "loanType", label: "Loan Type" },
   { name: "monthlyIncome", label: "Monthly Income", type: "number" },
   { name: "employmentType", label: "Employment Type" },
   { name: "leadSource", label: "Lead Source" },
@@ -108,19 +109,12 @@ export default function BulkUploadModal({ onClose }) {
   function validateMapping() {
     const requiredFields = LEAD_FIELDS.filter((f) => f.required).map((f) => f.name);
     const mappedFields = Object.values(fieldMapping);
-    const productIsMapped = mappedFields.includes("product");
 
     for (const field of requiredFields) {
       if (!mappedFields.includes(field)) {
         setUploadError(`Required field missing: ${LEAD_FIELDS.find((f) => f.name === field).label}`);
         return false;
       }
-    }
-
-    // Product is required by backend - must be provided via default or CSV mapping
-    if (!defaultProduct && !productIsMapped) {
-      setUploadError("Please select a Default Product or map a Product column from your CSV");
-      return false;
     }
 
     return true;
@@ -184,16 +178,16 @@ export default function BulkUploadModal({ onClose }) {
         {uploadError && <div style={{ color: "var(--red)", marginBottom: 12, fontSize: 13 }}>{uploadError}</div>}
 
         <div className="field">
-          <label>Product *</label>
+          <label>Product (optional)</label>
           <select value={defaultProduct} onChange={(e) => setDefaultProduct(e.target.value)}>
-            <option value="">Select a product OR map Product column from CSV</option>
+            <option value="">-- Select a product (optional) --</option>
             {activeProducts.map((p) => (
               <option key={p._id} value={p.name}>
                 {p.name}
               </option>
             ))}
           </select>
-          <p className="subtle" style={{ fontSize: 11, marginTop: 4 }}>Required: Select here or map a Product column in your CSV</p>
+          <p className="subtle" style={{ fontSize: 11, marginTop: 4 }}>Optional: Select a default product for all leads, or leave blank</p>
         </div>
 
         <div style={{ marginTop: 20, marginBottom: 20 }}>
@@ -234,9 +228,7 @@ export default function BulkUploadModal({ onClose }) {
     const leads = getMappedData();
     const requiredFields = LEAD_FIELDS.filter((f) => f.required).map((f) => f.name);
     const mappedFields = Object.values(fieldMapping);
-    const productIsMapped = mappedFields.includes("product");
-    const hasProduct = defaultProduct || productIsMapped;
-    const isValid = requiredFields.every((f) => mappedFields.includes(f)) && hasProduct;
+    const isValid = requiredFields.every((f) => mappedFields.includes(f));
 
     return (
       <Modal onClose={onClose} style={{ maxWidth: "600px" }}>
@@ -244,11 +236,6 @@ export default function BulkUploadModal({ onClose }) {
         <p className="subtle">Review the first few records before uploading.</p>
 
         {uploadError && <div style={{ color: "var(--red)", marginBottom: 12, fontSize: 13 }}>{uploadError}</div>}
-        {!hasProduct && (
-          <div style={{ color: "var(--red)", marginBottom: 12, fontSize: 13, backgroundColor: "var(--red-soft)", padding: "10px", borderRadius: "4px" }}>
-            Product is required: Select a Default Product or map a Product column and go back to mapping step.
-          </div>
-        )}
 
         <div style={{ maxHeight: 300, overflow: "auto", marginBottom: 16 }}>
           <table style={{ fontSize: 11, width: "100%" }}>

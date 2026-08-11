@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import AppLayout from "./layout/AppLayout";
 import DashboardPage from "./pages/DashboardPage";
 import LeadsPage from "./pages/LeadsPage";
+import TasksPage from "./pages/TasksPage";
 import VerificationPage from "./pages/VerificationPage";
 import AccountingPage from "./pages/AccountingPage";
 import RemindersPage from "./pages/RemindersPage";
@@ -41,6 +42,7 @@ function Routed() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="leads" element={<LeadsPage />} />
+        <Route path="tasks" element={<TasksPage />} />
         <Route path="verification" element={<VerificationPage />} />
         <Route path="accounting" element={<AccountingPage />} />
         <Route path="reminders" element={<RemindersPage />} />
