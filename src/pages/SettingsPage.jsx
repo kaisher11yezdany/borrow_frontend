@@ -80,23 +80,13 @@ function ProductsCard({ items, onAdd, onToggle, onSetColor }) {
               <tr key={it._id}>
                 <td>{it.name}</td>
                 <td>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <div
-                      style={{
-                        width: 24,
-                        height: 24,
-                        backgroundColor: it.color || "#3B82F6",
-                        border: "1px solid var(--gray)",
-                        borderRadius: 4,
-                      }}
-                    />
-                    <input
-                      type="color"
-                      value={it.color || "#3B82F6"}
-                      onChange={(e) => onSetColor(it._id, e.target.value)}
-                      style={{ width: 40, height: 32, cursor: "pointer", border: "1px solid var(--gray)" }}
-                    />
-                  </div>
+                  <input
+                    type="color"
+                    value={it.color || "#3B82F6"}
+                    onChange={(e) => onSetColor(it._id, e.target.value)}
+                    style={{ width: 24, height: 24, cursor: "pointer", border: "1px solid var(--border)", padding: 0, margin: 0, flexShrink: 0 }}
+                    title="Click to change color"
+                  />
                 </td>
                 <td>{it.active ? <span className="badge green">Active</span> : <span className="badge gray">Hidden</span>}</td>
                 <td><button className="btn-sm" onClick={() => onToggle(it._id)}>{it.active ? "Hide" : "Unhide"}</button></td>
@@ -113,7 +103,7 @@ function ProductsCard({ items, onAdd, onToggle, onSetColor }) {
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
-            style={{ width: 40, height: 36, cursor: "pointer", border: "1px solid var(--gray)" }}
+            style={{ width: 32, height: 26, cursor: "pointer", border: "1px solid var(--border)", padding: 2, flexShrink: 0 }}
           />
         </div>
         <button type="submit" className="btn-primary">Add</button>
