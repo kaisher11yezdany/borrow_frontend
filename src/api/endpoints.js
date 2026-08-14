@@ -18,6 +18,8 @@ export const LeadsAPI = {
   fixDisbursement: (id, body) => api.post(`/leads/${id}/fix-disbursement`, body).then((r) => r.data.lead),
   close: (id, body) => api.post(`/leads/${id}/close`, body).then((r) => r.data.lead),
   reopen: (id) => api.post(`/leads/${id}/reopen`).then((r) => r.data.lead),
+  requestDelete: (id, reason) => api.post(`/leads/${id}/request-delete`, { reason }).then((r) => r.data.lead),
+  approveDelete: (id, approve) => api.post(`/leads/${id}/approve-delete`, { approve }).then((r) => r.data),
   remove: (id) => api.delete(`/leads/${id}`).then((r) => r.data),
 };
 
