@@ -87,10 +87,30 @@ export default function LeadsPage() {
       qc.invalidateQueries({ queryKey: ["leads"] });
     };
 
+    const handleNoteAdded = ({ leadId, leadName, note, addedBy, timestamp }) => {
+      console.log(`New comment on ${leadName} from ${addedBy}: ${note}`);
+      // Show browser notification if available
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(`💬 ${addedBy} commented on ${leadName}`, {
+          body: note,
+          icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>💬</text></svg>"
+        });
+      }
+      // Invalidate notes for all leads to show fresh comments
+      qc.invalidateQueries({ queryKey: ["notes"] });
+    };
+
     socket.on("lead:updated", handleLeadUpdate);
+    socket.on("note:added", handleNoteAdded);
+
+    // Request notification permission on first load
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
 
     return () => {
       socket.off("lead:updated", handleLeadUpdate);
+      socket.off("note:added", handleNoteAdded);
     };
   }, [qc]);
 
