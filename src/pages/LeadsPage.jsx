@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { LeadsAPI, AccountingAPI, RemindersAPI, TeamAPI, SettingsAPI } from "../api/endpoints";
 import { STAGES } from "../constants";
+import { initSocket } from "../utils/socket";
 import LeadRow from "../components/LeadRow";
 import AddLeadModal from "../components/leadModals/AddLeadModal";
 import BulkUploadModal from "../components/leadModals/BulkUploadModal";
@@ -75,6 +76,23 @@ export default function LeadsPage() {
   useEffect(() => {
     if (!isLoading && page > totalPages) setPage(totalPages);
   }, [isLoading, page, totalPages]);
+
+  // Socket.IO real-time lead updates
+  useEffect(() => {
+    const socket = initSocket();
+
+    const handleLeadUpdate = ({ leadId, stage, updatedBy }) => {
+      console.log(`Lead ${leadId} updated to ${stage} by ${updatedBy}`);
+      // Invalidate leads query to fetch fresh data
+      qc.invalidateQueries({ queryKey: ["leads"] });
+    };
+
+    socket.on("lead:updated", handleLeadUpdate);
+
+    return () => {
+      socket.off("lead:updated", handleLeadUpdate);
+    };
+  }, [qc]);
 
   const acctByLead = useMemo(() => {
     const map = new Map();
