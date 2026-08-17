@@ -2,7 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { VerificationAPI, RemindersAPI } from "../api/endpoints";
-import { canVerify, canUpdateStage, canManageSettings, canViewTeamHierarchy } from "../constants";
+import { canVerify, canUpdateStage, canManageAccounting, canManageSettings, canViewTeamHierarchy } from "../constants";
 import logo from "../assets/logo.png";
 
 function useVerificationBadge(user) {
@@ -41,7 +41,7 @@ export default function AppLayout() {
     ["leads", "Leads"],
     ["tasks", "Tasks"],
     ...(canVerify(user) ? [["verification", `Verification${verificationBadge}`]] : []),
-    ["accounting", "Accounting"],
+    ...(canManageAccounting(user) ? [["accounting", "Accounting"]] : []),
     ...(canUpdateStage(user) ? [["reminders", `Reminders${reminderBadge}`]] : []),
     ["notifications", "Notifications"],
     ...(canViewTeamHierarchy(user) ? [["team", "Team & Hierarchy"]] : []),

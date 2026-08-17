@@ -9,7 +9,7 @@ export const STAGES = ["Lead Added", "Lead Contacted", "Login Done", "Sanction D
 
 const CAN_VERIFY = new Set(["Admin", "Backend", "Branch Manager", "Team Lead"]);
 const CAN_UPDATE_STAGE = new Set(["Admin", "Backend", "Branch Manager", "Sales Manager", "Team Lead", "RM"]);
-const CAN_MANAGE_ACCOUNTING = new Set(["Admin", "Backend", "Branch Manager"]);
+const CAN_MANAGE_ACCOUNTING = new Set(["Admin", "Branch Manager"]);
 const CAN_SEE_MARGIN = new Set(["Admin", "Backend", "Branch Manager", "Team Lead"]);
 const CAN_MANAGE_SETTINGS = new Set(["Admin", "Backend", "Branch Manager"]);
 const CAN_MANAGE_TEAM_MEMBERS = new Set(["Admin", "Backend", "Branch Manager"]);
