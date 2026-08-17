@@ -42,7 +42,7 @@ export default function AdvanceStageModal({ lead, onClose }) {
       <h2>Move to: {next}</h2>
       <p className="subtle">{lead.customerName} · {lead.product}</p>
       <form onSubmit={onSubmit}>
-        <StageFields next={next} lead={lead} fields={fields} setFields={setFields} banksByProduct={settings?.banksByProduct} />
+        <StageFields next={next} lead={lead} fields={fields} setFields={setFields} banksByProduct={settings?.banksByProduct} dsaCodes={settings?.dsaCodes} />
         {error && <p className="error-text">{error}</p>}
         <div className="modal-actions">
           <button type="button" onClick={onClose}>Cancel</button>

@@ -278,7 +278,7 @@ export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder,
         {idx >= 1 && (cu.role === "Admin" || (canUpdateStage(cu) && !alreadyDone)) && (
           <button className="btn-sm btn-ghost" onClick={() => actions.onEditStage(lead)}>Edit stage details</button>
         )}
-        {canUpdateStage(cu) && !alreadyDone && (
+        {canUpdateStage(cu) && !alreadyDone && lead.verification.status === "verified" && (
           <button className="btn-sm btn-ghost" style={{ color: "var(--red)" }} onClick={() => actions.onCloseLead(lead)}>Close lead</button>
         )}
       </td>

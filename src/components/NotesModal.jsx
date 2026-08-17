@@ -68,8 +68,8 @@ export default function NotesModal({ lead, onClose }) {
   const [submitting, setSubmitting] = useState(false);
 
   const { data: notes = [], refetch } = useQuery({
-    queryKey: ["notes", lead._id],
-    queryFn: () => NotesAPI.listForLead(lead._id),
+    queryKey: ["notes", lead._id, "note"],
+    queryFn: () => NotesAPI.listForLead(lead._id, "note"),
   });
 
   async function addNote(e) {
@@ -78,7 +78,7 @@ export default function NotesModal({ lead, onClose }) {
     if (!text.trim()) return;
     setSubmitting(true);
     try {
-      await NotesAPI.add(lead._id, text.trim());
+      await NotesAPI.add(lead._id, text.trim(), "note");
       setText("");
       refetch();
       qc.invalidateQueries({ queryKey: ["leads"] });

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { AccountingAPI, TeamAPI } from "../api/endpoints";
-import { canSeeMargin, inr } from "../constants";
+import { canManageAccounting, canSeeMargin, inr } from "../constants";
 import { installmentsTotal, entryBalance, entryStatusLabel, totalExpensesOf } from "../utils/acct";
 import PaymentsModal from "../components/accountingModals/PaymentsModal";
 import ExpensesModal from "../components/accountingModals/ExpensesModal";
@@ -30,6 +31,12 @@ const STAGES = ["Lead Added", "Lead Contacted", "Login Done", "Sanction Done", "
 
 export default function AccountingPage() {
   const { user } = useAuth();
+
+  // Check if user has permission to view accounting
+  if (!canManageAccounting(user)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const seeMargin = canSeeMargin(user);
   const [modal, setModal] = useState(null);
   const [page, setPage] = useState(1);

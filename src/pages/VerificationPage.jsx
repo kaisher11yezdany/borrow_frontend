@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { VerificationAPI, TeamAPI, SettingsAPI } from "../api/endpoints";
-import { canVerify, fmtDate, verificationStatusInfo } from "../constants";
+import { canVerify, canVerifyActions, fmtDate, verificationStatusInfo } from "../constants";
 import { evaluateConditions } from "../utils/filterEngine";
 import VerificationBadge from "../components/VerificationBadge";
 import FilterBuilder from "../components/FilterBuilder";
@@ -190,7 +190,7 @@ export default function VerificationPage() {
                         </td>
                         <td>{fmtDate(lead.createdAt)}</td>
                         <td style={{ whiteSpace: "nowrap" }}>
-                          {actionable ? (
+                          {actionable && canVerifyActions(user) ? (
                             <>
                               <button className="btn-sm btn-approve" onClick={() => approve(lead._id, "verification")}>Approve</button>{" "}
                               <button className="btn-sm btn-reject" onClick={() => reject(lead._id, "verification")}>Reject</button>
@@ -276,7 +276,7 @@ export default function VerificationPage() {
                         </td>
                         <td>{fmtDate(lead.disbursement.date)}</td>
                         <td style={{ whiteSpace: "nowrap" }}>
-                          {actionable ? (
+                          {actionable && canVerifyActions(user) ? (
                             <>
                               <button className="btn-sm btn-approve" onClick={() => approve(lead._id, "finalVerification")}>Approve</button>{" "}
                               <button className="btn-sm btn-reject" onClick={() => reject(lead._id, "finalVerification")}>Reject</button>

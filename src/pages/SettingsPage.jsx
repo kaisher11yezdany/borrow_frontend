@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { SettingsAPI } from "../api/endpoints";
@@ -167,14 +168,17 @@ function BanksCard({ products, banksByProduct, onAdd, onToggle }) {
 
 export default function SettingsPage() {
   const { user } = useAuth();
+
+  if (!canManageSettings(user)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["settings"], queryFn: SettingsAPI.get, enabled: canManageSettings(user) });
 
   function invalidate() {
     qc.invalidateQueries({ queryKey: ["settings"] });
   }
-
-  if (!canManageSettings(user)) return <><h1>Settings</h1><p className="subtle">Not available at your role.</p></>;
   if (isLoading) return <p className="subtle">Loading…</p>;
 
   const { products = [], banksByProduct = {}, expenseTypes = [], companyBankAccounts = [], digitalChannels = [] } = data || {};
@@ -219,6 +223,14 @@ export default function SettingsPage() {
           placeholder="New channel"
           onAdd={async (name) => { await SettingsAPI.addDigitalChannel(name); invalidate(); }}
           onToggle={async (id) => { await SettingsAPI.toggleDigitalChannel(id); invalidate(); }}
+        />
+        <LookupCard
+          title="DSA codes"
+          help="Bank DSA (Digital Solutions Architecture) codes — available when moving a lead to 'Login Done'."
+          items={data?.dsaCodes || []}
+          placeholder="New DSA code"
+          onAdd={async (name) => { await SettingsAPI.addDSACode(name); invalidate(); }}
+          onToggle={async (id) => { await SettingsAPI.toggleDSACode(id); invalidate(); }}
         />
       </div>
       <div className="card">

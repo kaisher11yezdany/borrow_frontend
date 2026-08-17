@@ -94,11 +94,13 @@ export const SettingsAPI = {
   toggleCompanyBankAccount: (id) => api.patch(`/settings/company-bank-accounts/${id}/toggle`).then((r) => r.data.item),
   addDigitalChannel: (name) => api.post("/settings/digital-channels", { name }).then((r) => r.data.item),
   toggleDigitalChannel: (id) => api.patch(`/settings/digital-channels/${id}/toggle`).then((r) => r.data.item),
+  addDSACode: (name) => api.post("/settings/dsa-codes", { name }).then((r) => r.data.item),
+  toggleDSACode: (id) => api.patch(`/settings/dsa-codes/${id}/toggle`).then((r) => r.data.item),
 };
 
 export const NotesAPI = {
-  listForLead: (leadId) => api.get(`/notes/lead/${leadId}`).then((r) => r.data.notes),
-  add: (leadId, text) => api.post(`/notes/lead/${leadId}`, { text }).then((r) => r.data.note),
+  listForLead: (leadId, type = "note") => api.get(`/notes/lead/${leadId}`, { params: { type } }).then((r) => r.data.notes),
+  add: (leadId, text, type = "note") => api.post(`/notes/lead/${leadId}`, { text, type }).then((r) => r.data.note),
   update: (id, text) => api.patch(`/notes/${id}`, { text }).then((r) => r.data.note),
   remove: (id) => api.delete(`/notes/${id}`).then((r) => r.data),
 };

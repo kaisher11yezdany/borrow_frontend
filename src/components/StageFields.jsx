@@ -15,7 +15,7 @@ export function defaultStageFields(next, lead) {
   return {};
 }
 
-export default function StageFields({ next, lead, fields, setFields, banksByProduct }) {
+export default function StageFields({ next, lead, fields, setFields, banksByProduct, dsaCodes }) {
   const [uploading, setUploading] = useState(false);
 
   function set(patch) {
@@ -50,7 +50,15 @@ export default function StageFields({ next, lead, fields, setFields, banksByProd
         </div>
         <div className="field">
           <label>DSA code <span style={{ color: "var(--red)" }}>*</span></label>
-          <input value={fields.dsaCode || ""} onChange={(e) => set({ dsaCode: e.target.value })} placeholder="Required" required />
+          <select value={fields.dsaCode || ""} onChange={(e) => set({ dsaCode: e.target.value })} required>
+            <option value="">Select DSA code</option>
+            {dsaCodes && dsaCodes.filter((d) => d.active).map((d) => (
+              <option key={d._id} value={d.name}>{d.name}</option>
+            ))}
+          </select>
+          {(!dsaCodes || dsaCodes.filter((d) => d.active).length === 0) && (
+            <p className="subtle" style={{ fontSize: 11, marginTop: 4 }}>No DSA codes set up — add one in Settings</p>
+          )}
         </div>
         <div className="field">
           <label>Application ID (bank's reference) <span style={{ color: "var(--red)" }}>*</span></label>

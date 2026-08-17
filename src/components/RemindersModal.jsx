@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Modal from "./Modal";
 import { RemindersAPI } from "../api/endpoints";
 import { useAuth } from "../auth/AuthContext";
-import { canUpdateStage, fmtDate } from "../constants";
+import { canUpdateStage, fmtDate, fmtDateTime } from "../constants";
 
 function isOverdue(r) {
   const today = new Date();
@@ -16,6 +16,7 @@ export default function RemindersModal({ lead, onClose }) {
   const editable = canUpdateStage(user);
   const qc = useQueryClient();
   const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [caseDetails, setCaseDetails] = useState("");
 
   const { data: reminders = [] } = useQuery({
@@ -32,9 +33,11 @@ export default function RemindersModal({ lead, onClose }) {
 
   async function addReminder(e) {
     e.preventDefault();
-    if (!date || !caseDetails.trim()) return;
-    await RemindersAPI.add(lead._id, { date, caseDetails: caseDetails.trim() });
+    if (!date || !time || !caseDetails.trim()) return;
+    const datetime = new Date(`${date}T${time}`);
+    await RemindersAPI.add(lead._id, { date: datetime, caseDetails: caseDetails.trim() });
     setDate("");
+    setTime("");
     setCaseDetails("");
     invalidate();
   }
@@ -78,7 +81,7 @@ export default function RemindersModal({ lead, onClose }) {
             sorted.map((r) => (
               <tr key={r._id}>
                 <td>
-                  {fmtDate(r.date)} {isOverdue(r) && <span className="badge red">Overdue</span>}
+                  {fmtDateTime(r.date)} {isOverdue(r) && <span className="badge red">Overdue</span>}
                 </td>
                 <td style={{ fontSize: 13 }}>{r.caseDetails}</td>
                 <td>{r.status === "done" ? <span className="badge green">Done</span> : <span className="badge amber">Pending</span>}</td>
@@ -103,6 +106,10 @@ export default function RemindersModal({ lead, onClose }) {
           <div className="field" style={{ marginBottom: 0, width: 150 }}>
             <label>Reminder date</label>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          </div>
+          <div className="field" style={{ marginBottom: 0, width: 100 }}>
+            <label>Time</label>
+            <input type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
           </div>
           <div className="field" style={{ marginBottom: 0, flex: 1, minWidth: 220 }}>
             <label>Case details</label>

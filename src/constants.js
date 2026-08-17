@@ -8,19 +8,21 @@ export const ROLES = ["Admin", "Backend", "Branch Manager", "Sales Manager", "Te
 export const STAGES = ["Lead Added", "Lead Contacted", "Login Done", "Sanction Done", "Disbursement Done"];
 
 const CAN_VERIFY = new Set(["Admin", "Backend", "Branch Manager", "Team Lead"]);
+const CAN_VERIFY_ACTIONS = new Set(["Admin", "Branch Manager", "Team Lead"]);
 const CAN_UPDATE_STAGE = new Set(["Admin", "Backend", "Branch Manager", "Sales Manager", "Team Lead", "RM"]);
 const CAN_MANAGE_ACCOUNTING = new Set(["Admin", "Branch Manager"]);
 const CAN_SEE_MARGIN = new Set(["Admin", "Backend", "Branch Manager", "Team Lead"]);
-const CAN_MANAGE_SETTINGS = new Set(["Admin", "Backend", "Branch Manager"]);
-const CAN_MANAGE_TEAM_MEMBERS = new Set(["Admin", "Backend", "Branch Manager"]);
-const CAN_VIEW_TEAM_HIERARCHY = new Set(["Admin", "Backend", "Branch Manager", "Team Lead", "RM"]);
-// Deliberately Admin-only — Backend and Branch Manager are explicitly denied
-// hierarchy remapping and data export even though they otherwise have broad access.
+const CAN_MANAGE_SETTINGS = new Set(["Admin", "Branch Manager"]);
+const CAN_MANAGE_TEAM_MEMBERS = new Set(["Admin", "Branch Manager"]);
+const CAN_VIEW_TEAM_HIERARCHY = new Set(["Admin", "Branch Manager", "Team Lead", "RM"]);
 const CAN_MANAGE_HIERARCHY = new Set(["Admin"]);
 const CAN_EXPORT_DATA = new Set(["Admin"]);
 
 export function canVerify(user) {
   return CAN_VERIFY.has(user.role);
+}
+export function canVerifyActions(user) {
+  return CAN_VERIFY_ACTIONS.has(user.role);
 }
 export function canUpdateStage(user) {
   return CAN_UPDATE_STAGE.has(user.role);

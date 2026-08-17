@@ -73,8 +73,8 @@ export default function CommentsModal({ lead, onClose }) {
   const [submitting, setSubmitting] = useState(false);
 
   const { data: comments = [], refetch } = useQuery({
-    queryKey: ["comments", lead._id],
-    queryFn: () => NotesAPI.listForLead(lead._id),
+    queryKey: ["comments", lead._id, "comment"],
+    queryFn: () => NotesAPI.listForLead(lead._id, "comment"),
   });
 
   async function addComment(e) {
@@ -83,7 +83,7 @@ export default function CommentsModal({ lead, onClose }) {
     if (!text.trim()) return;
     setSubmitting(true);
     try {
-      await NotesAPI.add(lead._id, text.trim());
+      await NotesAPI.add(lead._id, text.trim(), "comment");
       setText("");
       refetch();
       qc.invalidateQueries({ queryKey: ["leads"] });

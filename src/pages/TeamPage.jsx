@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { TeamAPI } from "../api/endpoints";
@@ -219,6 +220,12 @@ function TreeNode({ user, users, depth, canEditMembers, canRemap, editingId, set
 
 export default function TeamPage() {
   const { user: cu } = useAuth();
+
+  const canView = canViewTeamHierarchy(cu);
+  if (!canView) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   const qc = useQueryClient();
   const [editingId, setEditingId] = useState(null);
   const [name, setName] = useState("");
@@ -232,7 +239,6 @@ export default function TeamPage() {
 
   const editMembers = canManageTeamMembers(cu);
   const remap = canManageHierarchy(cu);
-  const canView = canViewTeamHierarchy(cu);
 
   const { data, isLoading } = useQuery({ queryKey: ["team"], queryFn: TeamAPI.get, enabled: canView });
   const users = data?.users || [];
@@ -282,8 +288,6 @@ export default function TeamPage() {
       setDraggedUser(null);
     }
   }
-
-  if (!canView) return <><h1>Team &amp; hierarchy</h1><p className="subtle">Not available at your role.</p></>;
   if (isLoading) return <p className="subtle">Loading…</p>;
 
   const roots = cu.role === "Admin" || cu.role === "Backend" ? users.filter((u) => !u.reportsTo) : users.filter((u) => u._id === cu.id);

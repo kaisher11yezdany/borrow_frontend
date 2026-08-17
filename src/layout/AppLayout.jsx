@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { VerificationAPI, RemindersAPI } from "../api/endpoints";
@@ -31,10 +32,61 @@ function useReminderBadge(user) {
   return n > 0 ? ` (${n})` : "";
 }
 
+function useReminderNotifications(user) {
+  const enabled = canUpdateStage(user);
+  const notifiedRef = useRef(new Set());
+  const { data } = useQuery({
+    queryKey: ["reminders-notifications"],
+    queryFn: RemindersAPI.board,
+    enabled,
+    refetchInterval: 10000,
+  });
+
+  useEffect(() => {
+    if (!enabled || !data || !("Notification" in window)) return;
+
+    const now = new Date();
+    const allReminders = [...(data.overdue || []), ...(data.dueToday || [])];
+
+    console.log(`[Reminder Check] Current time: ${now.toISOString()}, Found ${allReminders.length} reminders to check`);
+
+    allReminders.forEach(({ reminder, lead }) => {
+      const reminderId = String(reminder._id);
+      const reminderTime = new Date(reminder.date);
+
+      console.log(`[Reminder] "${lead.customerName}": scheduled=${reminderTime.toISOString()}, now=${now.toISOString()}, overdue=${reminderTime <= now}, alreadyNotified=${notifiedRef.current.has(reminderId)}`);
+
+      if (notifiedRef.current.has(reminderId)) return;
+
+      if (reminderTime <= now) {
+        notifiedRef.current.add(reminderId);
+
+        if (Notification.permission === "granted") {
+          console.log(`[Notification Sent] "${lead.customerName}": ${reminder.caseDetails}`);
+          new Notification(`🔔 Reminder: ${lead.customerName}`, {
+            body: reminder.caseDetails,
+            tag: `reminder-${reminderId}`,
+            requireInteraction: true,
+          });
+        } else {
+          console.warn(`[Permission Denied] Notification permission is: ${Notification.permission}`);
+        }
+      }
+    });
+  }, [enabled, data]);
+}
+
 export default function AppLayout() {
   const { user, logout } = useAuth();
   const verificationBadge = useVerificationBadge(user);
   const reminderBadge = useReminderBadge(user);
+  useReminderNotifications(user);
+
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
 
   const tabs = [
     ["dashboard", "Dashboard"],
