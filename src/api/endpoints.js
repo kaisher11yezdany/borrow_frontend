@@ -21,6 +21,8 @@ export const LeadsAPI = {
   requestDelete: (id, reason) => api.post(`/leads/${id}/request-delete`, { reason }).then((r) => r.data.lead),
   approveDelete: (id, approve) => api.post(`/leads/${id}/approve-delete`, { approve }).then((r) => r.data),
   remove: (id) => api.delete(`/leads/${id}`).then((r) => r.data),
+  assignBackendTeam: (leadId, userId) => api.post(`/leads/${leadId}/assign-backend-team`, { userId }).then((r) => r.data.lead),
+  unassignBackendTeam: (leadId, userId) => api.post(`/leads/${leadId}/unassign-backend-team`, { userId }).then((r) => r.data.lead),
 };
 
 export const VerificationAPI = {
@@ -79,6 +81,7 @@ export const TeamAPI = {
   addUser: (body) => api.post("/team/users", body).then((r) => r.data.user),
   updateUser: (id, body) => api.patch(`/team/users/${id}`, body).then((r) => r.data.user),
   removeUser: (id) => api.delete(`/team/users/${id}`).then((r) => r.data),
+  getBackendTeamMembers: () => api.get("/leads/backend-team/members").then((r) => r.data.users),
 };
 
 export const SettingsAPI = {

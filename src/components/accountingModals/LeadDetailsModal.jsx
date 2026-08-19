@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Modal from "../Modal";
+import BackendTeamModal from "../BackendTeamModal";
 import { KYCAPI, AttachmentsAPI, NotesAPI, TaskAPI, RemindersAPI } from "../../api/endpoints";
 import { fileUrl } from "../../api/client";
 import { fmtDateTime } from "../../constants";
@@ -18,6 +19,7 @@ function isImage(mimeType) {
 
 export default function LeadDetailsModal({ lead, onClose }) {
   const [activeTab, setActiveTab] = useState("details");
+  const [showBackendTeamModal, setShowBackendTeamModal] = useState(false);
 
   const { data: kycData } = useQuery({
     queryKey: ["kyc", lead._id],
@@ -53,12 +55,14 @@ export default function LeadDetailsModal({ lead, onClose }) {
     { id: "timeline", label: `Notes & Comments (${notes.length + comments.length})` },
     { id: "tasks", label: `Tasks (${tasks.length})` },
     { id: "reminders", label: `Reminders (${reminders.length})` },
+    { id: "backend-team", label: `Backend Team (${lead.backendTeamAssignments?.length || 0})` },
     { id: "accounting", label: "Accounting" },
     { id: "attachments", label: `Attachments (${attachments.length})` },
   ];
 
   return (
-    <Modal wide onClose={onClose}>
+    <>
+      <Modal wide onClose={onClose}>
       <div style={{ maxHeight: "80vh", overflowY: "auto" }}>
         <h2 style={{ marginBottom: 16 }}>{lead.customerName} — Complete Details</h2>
 
@@ -352,6 +356,60 @@ export default function LeadDetailsModal({ lead, onClose }) {
           </>
         )}
 
+        {/* Backend Team Tab */}
+        {activeTab === "backend-team" && (
+          <>
+            {lead.verification.status === "verified" ? (
+              <>
+                {lead.backendTeamAssignments && lead.backendTeamAssignments.length > 0 ? (
+                  <div style={{ marginBottom: 20 }}>
+                    <div style={{ display: "grid", gap: 12 }}>
+                      {lead.backendTeamAssignments.map((assignment) => (
+                        <div
+                          key={assignment._id}
+                          style={{
+                            padding: 12,
+                            border: "1px solid var(--border)",
+                            borderRadius: 4,
+                            backgroundColor: "var(--bg)",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <div>
+                              <strong>{assignment.userId.name}</strong>
+                              <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+                                {assignment.userId.email}
+                              </p>
+                              <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--text-muted)" }}>
+                                Assigned by {assignment.assignedBy.name} on{" "}
+                                {fmtDateTime(assignment.assignedAt)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="subtle" style={{ textAlign: "center", padding: "20px", marginBottom: 20 }}>
+                    No backend team members assigned yet
+                  </p>
+                )}
+
+                <button className="btn-primary" onClick={() => setShowBackendTeamModal(true)}>
+                  {lead.backendTeamAssignments?.length > 0
+                    ? "Manage Backend Team"
+                    : "Assign Backend Team"}
+                </button>
+              </>
+            ) : (
+              <p className="subtle" style={{ textAlign: "center", padding: "20px" }}>
+                Backend team can only be assigned after lead verification is completed.
+              </p>
+            )}
+          </>
+        )}
+
         {/* Accounting Tab */}
         {activeTab === "accounting" && (
           <>
@@ -437,6 +495,8 @@ export default function LeadDetailsModal({ lead, onClose }) {
           </button>
         </div>
       </div>
-    </Modal>
+      </Modal>
+      {showBackendTeamModal && <BackendTeamModal lead={lead} onClose={() => setShowBackendTeamModal(false)} />}
+    </>
   );
 }
