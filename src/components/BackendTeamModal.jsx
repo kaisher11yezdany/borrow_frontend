@@ -74,15 +74,15 @@ export default function BackendTeamModal({ lead, onClose }) {
                   alignItems: "center",
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>
-                    {assignment.userId.name}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>
+                    {assignment.userId?.name || "User (loading...)"}
                   </div>
                   <div className="subtle" style={{ fontSize: 12, margin: "4px 0 0" }}>
-                    {assignment.userId.email}
+                    {assignment.userId?.email || "—"}
                   </div>
-                  <div className="subtle" style={{ fontSize: 11, margin: "2px 0 0" }}>
-                    Assigned by {assignment.assignedBy.name} on{" "}
+                  <div className="subtle" style={{ fontSize: 11, margin: "4px 0 0" }}>
+                    Assigned by {assignment.assignedBy?.name || "Admin"} on{" "}
                     {fmtDateTime(assignment.assignedAt)}
                   </div>
                 </div>
