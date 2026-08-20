@@ -376,12 +376,12 @@ export default function LeadDetailsModal({ lead, onClose }) {
                         >
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                             <div>
-                              <strong>{assignment.userId.name}</strong>
+                              <strong>{assignment.userId?.name || "Removed user"}</strong>
                               <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
-                                {assignment.userId.email}
+                                {assignment.userId?.email}
                               </p>
                               <p style={{ margin: "4px 0 0", fontSize: 11, color: "var(--text-muted)" }}>
-                                Assigned by {assignment.assignedBy.name} on{" "}
+                                Assigned by {assignment.assignedBy?.name || "—"} on{" "}
                                 {fmtDateTime(assignment.assignedAt)}
                               </p>
                             </div>

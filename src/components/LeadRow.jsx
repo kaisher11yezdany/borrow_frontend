@@ -1,6 +1,6 @@
 import Tracker from "./Tracker";
 import VerificationBadge from "./VerificationBadge";
-import { STAGES, canEditLead, canUpdateStage, isClosed, inr, fmtDate, fmtDateTime, canSeeMargin } from "../constants";
+import { STAGES, canEditLead, canUpdateStage, isClosed, inr, fmtDate, fmtDateTime, canSeeMargin, canDeleteLeads } from "../constants";
 import { installmentsTotal, entryBalance, entryStatusLabel } from "../utils/acct";
 
 function isReminderOverdue(r) {
@@ -75,6 +75,8 @@ export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder,
   const next = STAGES[idx + 1];
   const isLast = !next;
   const partner = allUsers.find((u) => u._id === lead.partnerId);
+  // Selection exists only to feed bulk delete, so it follows the same role gate.
+  const selectable = canDeleteLeads(cu);
 
   // width:auto (not the global input/select 100%) so the column widens to
   // fit a long name instead of clipping it; the table's own overflow:auto
@@ -93,9 +95,11 @@ export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder,
   if (isClosed(lead)) {
     return (
       <tr style={{ opacity: 0.75, backgroundColor: isSelected ? "#E8F0FF" : undefined }}>
-        <td style={{ width: "40px", textAlign: "center", padding: "8px 0" }}>
-          <input type="checkbox" checked={isSelected} onChange={onSelectToggle} style={{ cursor: "pointer" }} />
-        </td>
+        {selectable && (
+          <td style={{ width: "40px", textAlign: "center", padding: "8px 0" }}>
+            <input type="checkbox" checked={isSelected} onChange={onSelectToggle} style={{ cursor: "pointer" }} />
+          </td>
+        )}
         <td>
           <button
             className="btn-link"
@@ -171,9 +175,11 @@ export default function LeadRow({ lead, cu, allUsers, acctEntries, nextReminder,
 
   return (
     <tr style={{ backgroundColor: isSelected ? "#E8F0FF" : undefined }}>
-      <td style={{ width: "40px", textAlign: "center", padding: "8px 0" }}>
-        <input type="checkbox" checked={isSelected} onChange={onSelectToggle} style={{ cursor: "pointer" }} />
-      </td>
+      {selectable && (
+        <td style={{ width: "40px", textAlign: "center", padding: "8px 0" }}>
+          <input type="checkbox" checked={isSelected} onChange={onSelectToggle} style={{ cursor: "pointer" }} />
+        </td>
+      )}
       <td>
         <button
           className="btn-link"

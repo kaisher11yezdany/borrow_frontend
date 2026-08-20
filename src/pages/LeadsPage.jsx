@@ -3,8 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { LeadsAPI, AccountingAPI, RemindersAPI, TeamAPI, SettingsAPI } from "../api/endpoints";
-import { STAGES } from "../constants";
-import { initSocket } from "../utils/socket";
+import { STAGES, canDeleteLeads } from "../constants";
+import { useLeadRealtime } from "../hooks/useLeadRealtime";
 import LeadRow from "../components/LeadRow";
 import AddLeadModal from "../components/leadModals/AddLeadModal";
 import BulkUploadModal from "../components/leadModals/BulkUploadModal";
@@ -40,6 +40,9 @@ export default function LeadsPage() {
   const [limit, setLimit] = useState(20);
   const [modal, setModal] = useState(null); // {type, lead?, title?, src?}
   const [selectedLeads, setSelectedLeads] = useState(new Set());
+  const canDelete = canDeleteLeads(user);
+  // The select-all column only renders for roles that may bulk delete.
+  const colCount = canDelete ? 13 : 12;
 
   function updateFilter(patch) {
     setFilters((f) => ({ ...f, ...patch }));
@@ -77,42 +80,7 @@ export default function LeadsPage() {
     if (!isLoading && page > totalPages) setPage(totalPages);
   }, [isLoading, page, totalPages]);
 
-  // Socket.IO real-time lead updates
-  useEffect(() => {
-    const socket = initSocket();
-
-    const handleLeadUpdate = ({ leadId, stage, updatedBy }) => {
-      console.log(`Lead ${leadId} updated to ${stage} by ${updatedBy}`);
-      // Invalidate leads query to fetch fresh data
-      qc.invalidateQueries({ queryKey: ["leads"] });
-    };
-
-    const handleNoteAdded = ({ leadId, leadName, note, addedBy, timestamp }) => {
-      console.log(`New comment on ${leadName} from ${addedBy}: ${note}`);
-      // Show browser notification if available
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(`💬 ${addedBy} commented on ${leadName}`, {
-          body: note,
-          icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>💬</text></svg>"
-        });
-      }
-      // Invalidate notes for all leads to show fresh comments
-      qc.invalidateQueries({ queryKey: ["notes"] });
-    };
-
-    socket.on("lead:updated", handleLeadUpdate);
-    socket.on("note:added", handleNoteAdded);
-
-    // Request notification permission on first load
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-
-    return () => {
-      socket.off("lead:updated", handleLeadUpdate);
-      socket.off("note:added", handleNoteAdded);
-    };
-  }, [qc]);
+  useLeadRealtime();
 
   const acctByLead = useMemo(() => {
     const map = new Map();
@@ -210,22 +178,55 @@ export default function LeadsPage() {
   }
 
   async function bulkDeleteLeads() {
-    if (selectedLeads.size === 0) return;
+    if (!canDelete || selectedLeads.size === 0) return;
+    const selected = leads.filter((l) => selectedLeads.has(l._id));
+    const verified = selected.filter((l) => l.verification.status === "verified");
+    const deletable = selected.length - verified.length;
+
+    if (!deletable) {
+      alert(
+        `Verified leads can't be deleted directly — use "Request delete" on each one instead.\n\n` +
+          `All ${selected.length} selected lead${selected.length === 1 ? " is" : "s are"} verified.`
+      );
+      return;
+    }
+
+    const warning = verified.length
+      ? `\n\n${verified.length} verified lead${verified.length === 1 ? "" : "s"} will be skipped — verified leads need a deletion request.`
+      : "";
     if (
       !window.confirm(
-        `Permanently delete ${selectedLeads.size} lead${selectedLeads.size > 1 ? "s" : ""}? This action cannot be undone.`
+        `Permanently delete ${deletable} lead${deletable > 1 ? "s" : ""}? This action cannot be undone.${warning}`
       )
     )
       return;
 
-    try {
-      for (const leadId of selectedLeads) {
-        await LeadsAPI.remove(leadId);
+    // One rejection must not abandon the rest of the batch, so each lead is
+    // attempted independently and the failures are reported together.
+    const failed = [];
+    let deleted = 0;
+    for (const lead of selected) {
+      if (lead.verification.status === "verified") continue;
+      try {
+        await LeadsAPI.remove(lead._id);
+        deleted += 1;
+      } catch (err) {
+        failed.push({
+          id: lead._id,
+          name: lead.customerName,
+          reason: err.response?.data?.error || err.message,
+        });
       }
-      setSelectedLeads(new Set());
-      invalidateAll();
-    } catch (err) {
-      alert("Error deleting leads: " + err.message);
+    }
+
+    // Leave the skipped and failed leads selected so the admin can act on them.
+    const stillSelected = [...verified.map((l) => l._id), ...failed.map((f) => f.id)];
+    setSelectedLeads(new Set(stillSelected));
+    invalidateAll();
+
+    if (failed.length) {
+      const lines = failed.map((f) => `• ${f.name} — ${f.reason}`).join("\n");
+      alert(`${deleted} deleted.\n\nCould not delete ${failed.length}:\n${lines}`);
     }
   }
 
@@ -305,7 +306,7 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {selectedLeads.size > 0 && (
+      {canDelete && selectedLeads.size > 0 && (
         <div style={{ display: "flex", gap: 12, marginBottom: 14, alignItems: "center", padding: "12px 16px", backgroundColor: "#F0F4F8", borderRadius: "6px" }}>
           <span style={{ fontSize: "14px", fontWeight: "500" }}>{selectedLeads.size} lead{selectedLeads.size > 1 ? "s" : ""} selected</span>
           <button className="btn-sm" onClick={bulkDeleteLeads} style={{ color: "white", backgroundColor: "var(--red)", border: "none" }}>
@@ -321,9 +322,11 @@ export default function LeadsPage() {
         <table>
           <thead>
             <tr style={{ backgroundColor: "#FAFAF8" }}>
-              <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)", width: "40px", textAlign: "center" }}>
-                <input type="checkbox" checked={leads.length > 0 && selectedLeads.size === leads.length} onChange={toggleSelectAll} style={{ cursor: "pointer" }} />
-              </th>
+              {canDelete && (
+                <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)", width: "40px", textAlign: "center" }}>
+                  <input type="checkbox" checked={leads.length > 0 && selectedLeads.size === leads.length} onChange={toggleSelectAll} style={{ cursor: "pointer" }} />
+                </th>
+              )}
               <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)" }}>Customer</th>
               <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)" }}>Product</th>
               <th style={{ fontWeight: "700", color: "var(--ink)", borderBottom: "2px solid var(--border)" }}>Loan Type</th>
@@ -340,9 +343,9 @@ export default function LeadsPage() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr className="empty-row"><td colSpan={13}>Loading…</td></tr>
+              <tr className="empty-row"><td colSpan={colCount}>Loading…</td></tr>
             ) : leads.length === 0 ? (
-              <tr className="empty-row"><td colSpan={13}>No leads match. Try clearing filters or add a lead.</td></tr>
+              <tr className="empty-row"><td colSpan={colCount}>No leads match. Try clearing filters or add a lead.</td></tr>
             ) : (
               leads.map((lead) => (
                 <LeadRow

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TaskAPI, TeamAPI } from "../api/endpoints";
 import { fmtDate, fmtDateTime } from "../constants";
 import LeadDetailsModal from "../components/accountingModals/LeadDetailsModal";
+import { useLeadRealtime } from "../hooks/useLeadRealtime";
 
 const STATUS_OPTIONS = [
   { value: "Not Started", label: "Not Started", color: "gray" },
@@ -21,6 +22,7 @@ const PAGE_SIZES = [10, 20, 50, 100];
 
 export default function TasksPage() {
   const qc = useQueryClient();
+  useLeadRealtime();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState("");

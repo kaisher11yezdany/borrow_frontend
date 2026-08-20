@@ -17,6 +17,7 @@ const CAN_MANAGE_TEAM_MEMBERS = new Set(["Admin", "Branch Manager"]);
 const CAN_VIEW_TEAM_HIERARCHY = new Set(["Admin", "Branch Manager", "Team Lead", "RM"]);
 const CAN_MANAGE_HIERARCHY = new Set(["Admin"]);
 const CAN_EXPORT_DATA = new Set(["Admin"]);
+const CAN_DELETE_LEADS = new Set(["Admin"]);
 
 export function canVerify(user) {
   return CAN_VERIFY.has(user.role);
@@ -47,6 +48,9 @@ export function canManageHierarchy(user) {
 }
 export function canExportData(user) {
   return CAN_EXPORT_DATA.has(user.role);
+}
+export function canDeleteLeads(user) {
+  return CAN_DELETE_LEADS.has(user.role);
 }
 export function isClosed(lead) {
   return lead.closure && lead.closure.status !== "open";

@@ -8,6 +8,7 @@ import { installmentsTotal, entryBalance, entryStatusLabel, totalExpensesOf } fr
 import PaymentsModal from "../components/accountingModals/PaymentsModal";
 import ExpensesModal from "../components/accountingModals/ExpensesModal";
 import LeadDetailsModal from "../components/accountingModals/LeadDetailsModal";
+import { useLeadRealtime } from "../hooks/useLeadRealtime";
 
 function AcctCell({ lead, field, entry, editable, doneLabel, onManage }) {
   const total = installmentsTotal(entry);
@@ -31,6 +32,7 @@ const STAGES = ["Lead Added", "Lead Contacted", "Login Done", "Sanction Done", "
 
 export default function AccountingPage() {
   const { user } = useAuth();
+  useLeadRealtime();
 
   // Check if user has permission to view accounting
   if (!canManageAccounting(user)) {

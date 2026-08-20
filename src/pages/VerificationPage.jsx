@@ -11,6 +11,7 @@ import NotesModal from "../components/NotesModal";
 import VerificationHistoryModal from "../components/VerificationHistoryModal";
 import { ImageModal } from "../components/ViewModal";
 import LeadDetailsModal from "../components/accountingModals/LeadDetailsModal";
+import { useLeadRealtime } from "../hooks/useLeadRealtime";
 
 const QUEUE_STATUS_OPTIONS = [
   { value: "pending", label: "Pending review" },
@@ -30,6 +31,7 @@ const PAGE_SIZES = [10, 20, 50, 100];
 export default function VerificationPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  useLeadRealtime();
   const [modal, setModal] = useState(null);
   const [activeTab, setActiveTab] = useState("new");
   const [queuePage, setQueuePage] = useState(1);
