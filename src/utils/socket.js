@@ -5,7 +5,11 @@ let socket = null;
 export function initSocket() {
   if (socket) return socket;
 
-  socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
+  // Same origin by default so a deployed build talks to whatever host served
+  // it (nginx proxies /socket.io through to the backend) — in dev that is
+  // Vite's own proxy. Set VITE_API_ORIGIN, the same variable the REST client
+  // uses, only when the backend lives on a different host.
+  socket = io(import.meta.env.VITE_API_ORIGIN || undefined, {
     reconnection: true,
     reconnectionDelay: 1000,
     reconnectionAttempts: 5,
