@@ -235,7 +235,7 @@ export default function PaymentsModal({ lead, field, editable, onClose }) {
           </div>
           <div className="field" style={{ marginBottom: 0, width: 140 }}>
             <label>Date</label>
-            <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} min={new Date().toISOString().slice(0, 10)} />
+            <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           <div className="field" style={{ marginBottom: 0, flex: 1, minWidth: 140 }}>
             <label>{cfg.account}</label>
