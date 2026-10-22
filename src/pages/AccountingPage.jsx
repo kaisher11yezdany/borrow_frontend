@@ -209,13 +209,13 @@ export default function AccountingPage() {
           <thead>
             <tr>
               <th>Customer</th><th>Product</th><th>Stage</th><th>Disbursed</th><th>Receivable (bank commission)</th>
-              <th>Service Fee</th><th>Payable (partner payout)</th><th>Manager Bonus</th><th>Expenses</th>
+              <th>Service Fee</th><th>Commission received</th><th>Total receivable</th><th>Payable (partner payout)</th><th>Manager Bonus</th><th>Expenses</th>
               <th>Gross Revenue</th><th>Net Revenue</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr className="empty-row"><td colSpan={11}>No leads yet.</td></tr>
+              <tr className="empty-row"><td colSpan={13}>No leads yet.</td></tr>
             ) : (
               rows.map((r) => (
                 <tr key={r.lead._id}>
@@ -256,6 +256,12 @@ export default function AccountingPage() {
                   <td>
                     <AcctCell lead={r.lead} field="serviceFee" entry={r.serviceFee} editable={r.editable} doneLabel="Received"
                       onManage={() => setModal({ type: "payments", lead: r.lead, field: "serviceFee", editable: r.editable })} />
+                  </td>
+                  <td className="num" style={{ color: "var(--green)", fontWeight: 600 }}>
+                    {inr(installmentsTotal(r.receivable) + installmentsTotal(r.serviceFee))}
+                  </td>
+                  <td className="num" style={{ color: Math.max(0, entryBalance(r.receivable)) + Math.max(0, entryBalance(r.serviceFee)) > 0 ? "var(--amber)" : undefined, fontWeight: 600 }}>
+                    {inr(Math.max(0, entryBalance(r.receivable)) + Math.max(0, entryBalance(r.serviceFee)))}
                   </td>
                   <td>
                     <AcctCell lead={r.lead} field="payable" entry={r.payable} editable={r.editable} doneLabel="Paid"
