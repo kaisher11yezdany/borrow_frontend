@@ -282,7 +282,7 @@ export default function AccountingPage() {
                       <button className="btn-sm btn-ghost" onClick={() => setModal({ type: "expenses", lead: r.lead, editable: r.editable })}>Manage</button>
                     )}
                   </td>
-                  <td className="num" style={{ color: "var(--gold)" }}>{inr(r.grossRevenue)}</td>
+                  <td className="num" style={{ color: "var(--gold)" }}>{inr((r.receivable?.expectedAmount || 0) + (r.serviceFee?.expectedAmount || 0))}</td>
                   <td className="num" style={{ color: "var(--green)" }}>{inr(r.netRevenue)}</td>
                 </tr>
               ))
