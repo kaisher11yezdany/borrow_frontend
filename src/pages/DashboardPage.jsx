@@ -123,9 +123,9 @@ export default function DashboardPage() {
         <>
           <h2 style={{ margin: "0 0 10px", fontSize: 15 }}>Disbursement Done — Commission overview</h2>
           <div className="row" style={{ marginBottom: 20 }}>
-            <StatCard label="Total commission receivable" value={inr(commissionStats.totalCommissionReceivable)} cls="gold" />
-            <StatCard label="Commission already received" value={inr(commissionStats.commissionReceived)} cls="green" />
-            <StatCard label="Commission balance receivable" value={inr(commissionStats.commissionBalance)} valueStyle={{ color: "#E57373" }} />
+            <StatCard label="Total commission receivable" value={inr(commissionStats.totalCommissionReceivable)} cardStyle={{ background: "#B8860B", border: "none" }} labelStyle={{ color: "rgba(255,255,255,0.8)" }} valueStyle={{ color: "#fff" }} />
+            <StatCard label="Commission already received" value={inr(commissionStats.commissionReceived)} cardStyle={{ background: "#2E7D32", border: "none" }} labelStyle={{ color: "rgba(255,255,255,0.8)" }} valueStyle={{ color: "#fff" }} />
+            <StatCard label="Commission balance receivable" value={inr(commissionStats.commissionBalance)} cardStyle={{ background: "#C62828", border: "none" }} labelStyle={{ color: "rgba(255,255,255,0.8)" }} valueStyle={{ color: "#fff" }} />
           </div>
         </>
       )}
@@ -174,10 +174,10 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ label, value, cls, style, valueStyle }) {
+function StatCard({ label, value, cls, style, valueStyle, cardStyle, labelStyle }) {
   return (
-    <div className="stat-card">
-      <div className="stat-label">{label}</div>
+    <div className="stat-card" style={cardStyle}>
+      <div className="stat-label" style={labelStyle}>{label}</div>
       <div className={`stat-value${cls ? ` ${cls}` : ""}`} style={valueStyle || style}>
         {value}
       </div>
