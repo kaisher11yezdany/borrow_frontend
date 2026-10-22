@@ -30,6 +30,14 @@ export default function DashboardPage() {
     });
   }, [rows, filters, seeMargin]);
 
+  const commissionStats = useMemo(() => {
+    const disbRows = rows.filter((r) => r.lead.stage === "Disbursement Done");
+    const totalCommissionReceivable = disbRows.reduce((s, r) => s + (r.receivable?.expectedAmount || 0) + (r.serviceFee?.expectedAmount || 0), 0);
+    const commissionReceived = disbRows.reduce((s, r) => s + installmentsTotal(r.receivable) + installmentsTotal(r.serviceFee), 0);
+    const commissionBalance = disbRows.reduce((s, r) => s + Math.max(0, entryBalance(r.receivable)) + Math.max(0, entryBalance(r.serviceFee)), 0);
+    return { totalCommissionReceivable, commissionReceived, commissionBalance };
+  }, [rows]);
+
   const stats = useMemo(() => {
     if (seeMargin) {
       const totalReceived = filtered.reduce((s, r) => s + installmentsTotal(r.receivable), 0);
@@ -111,6 +119,17 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {seeMargin && (
+        <>
+          <h2 style={{ margin: "0 0 10px", fontSize: 15 }}>Disbursement Done — Commission overview</h2>
+          <div className="row" style={{ marginBottom: 20 }}>
+            <StatCard label="Total commission receivable" value={inr(commissionStats.totalCommissionReceivable)} cls="gold" />
+            <StatCard label="Commission already received" value={inr(commissionStats.commissionReceived)} cls="green" />
+            <StatCard label="Commission balance receivable" value={inr(commissionStats.commissionBalance)} valueStyle={{ color: "#E57373" }} />
+          </div>
+        </>
+      )}
+
       <div className="row" style={{ marginBottom: 16 }}>
         {seeMargin ? (
           <>
@@ -155,11 +174,11 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ label, value, cls, style }) {
+function StatCard({ label, value, cls, style, valueStyle }) {
   return (
     <div className="stat-card">
       <div className="stat-label">{label}</div>
-      <div className={`stat-value${cls ? ` ${cls}` : ""}`} style={style}>
+      <div className={`stat-value${cls ? ` ${cls}` : ""}`} style={valueStyle || style}>
         {value}
       </div>
     </div>
